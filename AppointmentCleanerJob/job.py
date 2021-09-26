@@ -10,7 +10,6 @@ sys.path.append("..")
 from utils.database import Database
 from utils.sendmail import send_mail_reminder
 from utils.slot import get_slot_time
-from TicketGeneration.pdfcreator.pdf import PDFgenerator
 import datetime
 
 logFile = '../../Logs/Impfzentrum/clean.log'
