@@ -95,16 +95,16 @@ def send_cancel_appointment(recipient, date, vorname, nachname):
             "The following error occured in send mail reminder: %s" % (err))
         return False
 
-def send_mail_reminder(recipient, date, vorname, nachname, appointment, url):
+def send_mail_reminder(recipient, date, vorname, nachname, appointment, impfstoff, url):
     try:
         logging.debug("Receviced the following recipient: %s to be sent to." % (
             recipient))
         message = MIMEMultipart()
         with open('../utils/MailLayout/Reminder.html', encoding='utf-8') as f:
             fileContent = f.read()
-        messageContent = fileContent.replace('[[DATE]]', date.strftime("%d.%m.%Y")).replace('[[VORNAME]]', str(vorname)).replace('[[NACHNAME]]', str(nachname)).replace('[[SLOT]]', str(appointment)).replace('[[LINK]]', str(url))
+        messageContent = fileContent.replace('[[DATE]]', date.strftime("%d.%m.%Y")).replace('[[VORNAME]]', str(vorname)).replace('[[NACHNAME]]', str(nachname)).replace('[[SLOT]]', str(appointment)).replace('[[IMPFSTOFF]]', str(impfstoff)).replace('[[LINK]]', str(url))
         message.attach(MIMEText(messageContent, 'html'))
-        message['Subject'] = "Erinnerung an Termin %s im Impfzentrum des DRK Odenwaldkreis am %s" % (str(appointment), str(date))
+        message['Subject'] = "Erinnerung an Termin im Impfzentrum des DRK Odenwaldkreis am %s um %s" % (str(date), str(appointment))
         message['From'] = "Impfzentrum des DRK Odenwaldkreis" + f' <{FROM_EMAIL}>'
         message['Reply-To'] = FROM_EMAIL
         message['To'] = recipient
@@ -122,14 +122,14 @@ def send_mail_reminder(recipient, date, vorname, nachname, appointment, url):
             "The following error occured in send mail reminder: %s" % (err))
         return False
 
-def send_qr_ticket_mail(recipient, date, vorname, nachname, appointment, ort, url):
+def send_notification(recipient, date, vorname, nachname, appointment, impfstoff, url):
     try:
         logging.debug("Receviced the following recipient: %s to be sent to." % (
             recipient))
         message = MIMEMultipart()
-        with open('../utils/MailLayout/QRTicket.html', encoding='utf-8') as f:
+        with open('../utils/MailLayout/Notification.html', encoding='utf-8') as f:
             fileContent = f.read()
-        messageContent = fileContent.replace('[[DATE]]', date.strftime("%d.%m.%Y")).replace('[[VORNAME]]', str(vorname)).replace('[[NACHNAME]]', str(nachname)).replace('[[SLOT]]', str(appointment)).replace('[[LINK]]', str(url)).replace('[[ORT]]', str(ort))
+        messageContent = fileContent.replace('[[DATE]]', date.strftime("%d.%m.%Y")).replace('[[VORNAME]]', str(vorname)).replace('[[NACHNAME]]', str(nachname)).replace('[[SLOT]]', str(appointment)).replace('[[LINK]]', str(url)).replace('[[IMPFSTOFF]]', str(impfstoff))
         message['Subject'] = "Impftermin um %s im Impfzentrum des DRK Odenwaldkreis am %s" % (str(appointment), str(date))
         message.attach(MIMEText(messageContent, 'html'))
         message['From'] = "Impfzentrum des DRK Odenwaldkreis" + f' <{FROM_EMAIL}>'

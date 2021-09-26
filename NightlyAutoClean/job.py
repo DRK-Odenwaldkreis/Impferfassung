@@ -10,7 +10,7 @@ sys.path.append("..")
 from utils.database import Database
 import datetime
 
-logFile = '../../Logs/cleanJob.log'
+logFile = '../../Logs/Impfzentrum/cleanJob.log'
 logging.basicConfig(filename=logFile, level=logging.INFO,
                     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 logger = logging.getLogger('Nightly Auto Clean started on: %s'%datetime.datetime.now())

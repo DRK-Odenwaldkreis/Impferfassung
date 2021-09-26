@@ -13,7 +13,7 @@ from utils.slot import get_slot_time
 from TicketGeneration.pdfcreator.pdf import PDFgenerator
 import datetime
 
-logFile = '../../Logs/clean.log'
+logFile = '../../Logs/Impfzentrum/clean.log'
 logging.basicConfig(filename=logFile,level=logging.INFO,
                     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 logger = logging.getLogger('Cleaning for not verified appointments started on: %s'%(datetime.datetime.now()))
