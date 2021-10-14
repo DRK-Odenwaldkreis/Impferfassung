@@ -95,16 +95,16 @@ def send_cancel_appointment(recipient, date, vorname, nachname):
             "The following error occured in send mail reminder: %s" % (err))
         return False
 
-def send_mail_reminder(recipient, date, vorname, nachname, appointment, impfstoff, url):
+def send_mail_reminder(recipient, date, vorname, nachname, appointment, impfstoff, url, location):
     try:
         logging.debug("Receviced the following recipient: %s to be sent to." % (
             recipient))
         message = MIMEMultipart()
         with open('../utils/MailLayout/Reminder.html', encoding='utf-8') as f:
             fileContent = f.read()
-        messageContent = fileContent.replace('[[DATE]]', date.strftime("%d.%m.%Y")).replace('[[VORNAME]]', str(vorname)).replace('[[NACHNAME]]', str(nachname)).replace('[[SLOT]]', str(appointment)).replace('[[IMPFSTOFF]]', str(impfstoff)).replace('[[LINK]]', str(url))
+        messageContent = fileContent.replace('[[DATE]]', date.strftime("%d.%m.%Y")).replace('[[VORNAME]]', str(vorname)).replace('[[NACHNAME]]', str(nachname)).replace('[[SLOT]]', str(appointment)).replace('[[IMPFSTOFF]]', str(impfstoff)).replace('[[LINK]]', str(url)).replace('[[ORT]]', str(location))
         message.attach(MIMEText(messageContent, 'html'))
-        message['Subject'] = "Erinnerung an Termin im Impfzentrum des DRK Odenwaldkreis am %s um %s" % (str(date), str(appointment))
+        message['Subject'] = "Erinnerung an Termin im Impfzentrum des DRK Odenwaldkreis am %s %s" % (str(date), str(appointment))
         message['From'] = "Impfzentrum des DRK Odenwaldkreis" + f' <{FROM_EMAIL}>'
         message['Reply-To'] = FROM_EMAIL
         message['To'] = recipient

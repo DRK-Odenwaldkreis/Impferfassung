@@ -26,7 +26,7 @@ if __name__ == "__main__":
             logger.debug('Input parameters are not correct, date needed')
             raise Exception
         DatabaseConnect = Database()
-        sql = "Select Voranmeldung.Vorname, Voranmeldung.Nachname, Voranmeldung.Mailadresse, Termine.Slot, Termine.Stunde, Voranmeldung.Tag, Voranmeldung.Token, Voranmeldung.id, Station.Ort, Station.Adresse, Termine.opt_station_adresse, Termine.opt_station, Impfstoff.Kurzbezeichnung from Voranmeldung JOIN Termine ON Termine.id=Voranmeldung.Termin_id JOIN Station ON Termine.id_station=Station.id JOIN Impfstoff ON Impfstoff.id=Station.Impfstoff_id where Voranmeldung.Tag Between '%s 00:00:00' and '%s 23:59:59' and Reminded = 0 and Termine.Slot is not NULL and Voranmeldung.Token is not NULL;" % (requestedDate,requestedDate)
+        sql = "Select Voranmeldung.Vorname, Voranmeldung.Nachname, Voranmeldung.Mailadresse, Termine.Slot, Termine.Stunde, Voranmeldung.Tag, Voranmeldung.Token, Voranmeldung.id, Station.Ort, Station.Adresse, Termine.opt_station_adresse, Termine.opt_station, Impfstoff.Kurzbezeichnung from Voranmeldung JOIN Termine ON Termine.id=Voranmeldung.Termin_id JOIN Station ON Termine.id_station=Station.id JOIN Impfstoff ON Impfstoff.id=Station.Impfstoff_id where Voranmeldung.Tag Between '%s 00:00:00' and '%s 23:59:59' and Reminded = 0 and Voranmeldung.Token is not NULL;" % (requestedDate,requestedDate)
         logger.debug('Getting all appointments for %s, using the following query: %s' % (requestedDate,sql))
         recipients = DatabaseConnect.read_all(sql)
         logger.debug('Received the following recipients: %s' %(str(recipients)))
@@ -46,14 +46,17 @@ if __name__ == "__main__":
                 opt_ort = i[10]
                 opt_adress = i[11]
                 impfstoff = i[12]
-                appointment = get_slot_time(slot,stunde)
+                if slot:
+                    appointment = 'um ' + get_slot_time(slot,stunde) + ' Uhr'
+                else:
+                    appointment = ''
                 if len(opt_ort) == 0 and len(opt_adress) == 0:
                     location = str(ort) + ", " + str(adress)
                 else:
                     location = str(opt_ort) + "," + str(opt_adress)
                 logger.debug('Handing over to sendmail of reminder')
                 url = "https://impfzentrum-odw.de/registration/index.php?cancel=cancel&t=%s&i=%s" % (token, entry)
-                if send_mail_reminder(mail, date, vorname, nachname, appointment, impfstoff, url):
+                if send_mail_reminder(mail, date, vorname, nachname, appointment, impfstoff, url, location):
                     logger.debug('Mail was succesfully send, closing entry in db')
                     sql = "Update Voranmeldung SET Reminded = 1 WHERE id = %s;" % (entry)
                     DatabaseConnect.update(sql)
