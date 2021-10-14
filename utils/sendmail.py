@@ -129,8 +129,8 @@ def send_notification(recipient, date, vorname, nachname, appointment, impfstoff
         message = MIMEMultipart()
         with open('../utils/MailLayout/Notification.html', encoding='utf-8') as f:
             fileContent = f.read()
-        messageContent = fileContent.replace('[[DATE]]', date.strftime("%d.%m.%Y")).replace('[[VORNAME]]', str(vorname)).replace('[[NACHNAME]]', str(nachname)).replace('[[SLOT]]', str(appointment)).replace('[[LINK]]', str(url)).replace('[[IMPFSTOFF]]', str(impfstoff).replace('[[ORT]]', str(location))
-        message['Subject'] = "Impftermin um %s im Impfzentrum des DRK Odenwaldkreis am %s" % (str(appointment), str(date))
+        messageContent = fileContent.replace('[[DATE]]', date.strftime("%d.%m.%Y")).replace('[[VORNAME]]', str(vorname)).replace('[[NACHNAME]]', str(nachname)).replace('[[SLOT]]', str(appointment)).replace('[[LINK]]', str(url)).replace('[[IMPFSTOFF]]', str(impfstoff)).replace('[[ORT]]', str(location))
+        message['Subject'] = "Impftermin %s im Impfzentrum des DRK Odenwaldkreis am %s" % (str(appointment), str(date))
         message.attach(MIMEText(messageContent, 'html'))
         message['From'] = "Impfzentrum des DRK Odenwaldkreis" + f' <{FROM_EMAIL}>'
         message['Reply-To'] = FROM_EMAIL
