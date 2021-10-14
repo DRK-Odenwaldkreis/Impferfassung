@@ -122,14 +122,14 @@ def send_mail_reminder(recipient, date, vorname, nachname, appointment, impfstof
             "The following error occured in send mail reminder: %s" % (err))
         return False
 
-def send_notification(recipient, date, vorname, nachname, appointment, impfstoff, url):
+def send_notification(recipient, date, vorname, nachname, appointment, impfstoff, url, location):
     try:
         logging.debug("Receviced the following recipient: %s to be sent to." % (
             recipient))
         message = MIMEMultipart()
         with open('../utils/MailLayout/Notification.html', encoding='utf-8') as f:
             fileContent = f.read()
-        messageContent = fileContent.replace('[[DATE]]', date.strftime("%d.%m.%Y")).replace('[[VORNAME]]', str(vorname)).replace('[[NACHNAME]]', str(nachname)).replace('[[SLOT]]', str(appointment)).replace('[[LINK]]', str(url)).replace('[[IMPFSTOFF]]', str(impfstoff))
+        messageContent = fileContent.replace('[[DATE]]', date.strftime("%d.%m.%Y")).replace('[[VORNAME]]', str(vorname)).replace('[[NACHNAME]]', str(nachname)).replace('[[SLOT]]', str(appointment)).replace('[[LINK]]', str(url)).replace('[[IMPFSTOFF]]', str(impfstoff).replace('[[ORT]]', str(location))
         message['Subject'] = "Impftermin um %s im Impfzentrum des DRK Odenwaldkreis am %s" % (str(appointment), str(date))
         message.attach(MIMEText(messageContent, 'html'))
         message['From'] = "Impfzentrum des DRK Odenwaldkreis" + f' <{FROM_EMAIL}>'

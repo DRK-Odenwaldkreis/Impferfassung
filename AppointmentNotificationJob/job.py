@@ -24,7 +24,7 @@ logger.info('Starting Ticketgeneration')
 if __name__ == "__main__":
     try:
         DatabaseConnect = Database()
-        sql = "Select Voranmeldung.Vorname, Voranmeldung.Nachname, Voranmeldung.Mailadresse, Termine.Slot, Termine.Stunde, Voranmeldung.Tag, Voranmeldung.Token, Voranmeldung.id, Station.Ort, Station.Adresse, Termine.opt_station_adresse, Termine.opt_station, Impfstoff.Kurzbezeichnung from Voranmeldung JOIN Termine ON Termine.id=Voranmeldung.Termin_id JOIN Station ON Termine.id_station=Station.id JOIN Impfstoff ON Impfstoff.id=Station.Impfstoff_id where Voranmeldung.Token is not NULL and Voranmeldung.Mailsend = 0 and Termine.Slot is not  NULL;"
+        sql = "Select Voranmeldung.Vorname, Voranmeldung.Nachname, Voranmeldung.Mailadresse, Termine.Slot, Termine.Stunde, Voranmeldung.Tag, Voranmeldung.Token, Voranmeldung.id, Station.Ort, Station.Adresse, Termine.opt_station_adresse, Termine.opt_station, Impfstoff.Kurzbezeichnung from Voranmeldung JOIN Termine ON Termine.id=Voranmeldung.Termin_id JOIN Station ON Termine.id_station=Station.id JOIN Impfstoff ON Impfstoff.id=Station.Impfstoff_id where Voranmeldung.Token is not NULL and Voranmeldung.Mailsend = 0;"
         content = DatabaseConnect.read_all(sql)
         logger.debug('Received the following recipients: %s' %(str(content)))
         for i in content:
@@ -43,13 +43,16 @@ if __name__ == "__main__":
                 opt_ort = i[10]
                 opt_adress = i[11]
                 impfstoff = i[12]
-                appointment = get_slot_time(slot,stunde)
+                if slot:
+                    appointment = 'um ' + get_slot_time(slot,stunde) + ' Uhr'
+                else:
+                    appointment = ''
                 if len(opt_ort) == 0 and len(opt_adress) == 0:
                     location = str(ort) + ", " + str(adress)
                 else:
                     location = str(opt_ort) + "," + str(opt_adress)
                 url = "https://impfzentrum-odw.de/registration/index.php?cancel=cancel&t=%s&i=%s" % (token,entry)
-                if send_notification(mail,date,vorname,nachname,appointment,impfstoff,url): 
+                if send_notification(mail,date,vorname,nachname,appointment,impfstoff,url,location): 
                     logger.debug('Mail was succesfully send, closing entry in db')
                     sql = "Update Voranmeldung SET Mailsend = 1 WHERE id = %s;" % (entry)
                     DatabaseConnect.update(sql)
