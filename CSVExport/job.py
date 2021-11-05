@@ -12,7 +12,6 @@ import sys
 sys.path.append("..")
 from utils.database import Database
 from createCSV import create_CSV
-from utils.sendmail import send_csv_report
 import pyexcel
 
 logFile = '../../Logs/Impfzentrum/CSVExportJob.log'
@@ -26,7 +25,7 @@ if __name__ == "__main__":
         DatabaseConnect = Database()
         if len(sys.argv) == 2:
             requestedDate = sys.argv[1]
-            sql = "Select Voranmeldung.id,Nachname,Vorname,Telefon,Mailadresse,Impfstoff.Kurzbezeichnung,Voranmeldung.Tag from Voranmeldung LEFT JOIN Termine ON Termine.id=Voranmeldung.Termin_id LEFT JOIN Station ON Station.id=Termine.id_station LEFT JOIN Impfstoff ON Impfstoff.id=Station.Impfstoff_id where Used= 1 and Tag Between '%s 00:00:00' and '%s 23:59:59';" % (requestedDate.replace('-', '.'), requestedDate.replace('-', '.'))
+            sql = "Select Voranmeldung.id,Nachname,Vorname,Telefon,Mailadresse,Impfstoff.Kurzbezeichnung,Voranmeldung.Tag from Voranmeldung LEFT JOIN Termine ON Termine.id=Voranmeldung.Termin_id LEFT JOIN Station ON Station.id=Termine.id_station LEFT JOIN Impfstoff ON Impfstoff.id=Station.Impfstoff_id where Voranmeldung.Used= 1 and Voranmeldung.Tag Between '%s 00:00:00' and '%s 23:59:59';" % (requestedDate.replace('-', '.'), requestedDate.replace('-', '.'))
         else:
             logger.debug('Input parameters are not correct, date and/or gesundheitsamt needed')
             raise Exception
