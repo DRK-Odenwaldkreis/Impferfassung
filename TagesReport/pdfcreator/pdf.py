@@ -47,12 +47,19 @@ class PDFgenerator:
 	def __init__(self, content, date):
 		self.content=content
 		self.date=date
+		self.sizes=[]
+		self.labels=[]
+		self.total = 0
+		for i in self.content:
+			self.sizes.append(i[0])
+			self.labels.append(i[1])
+			self.total = self.total + i[0]
 		self.fig1, self.ax1 = plt.subplots()
-		self.ax1.pie(self.sizes, explode=self.explode, labels=self.labels, autopct=lambda p: '{:.2f}%  ({:,.0f})'.format(p, p * sum(self.sizes)/100),
+		self.ax1.pie(self.sizes, labels=self.labels, autopct=lambda p: '{:.2f}%  ({:,.0f})'.format(p, p * sum(self.sizes)/100),
                     shadow=True, startangle=90)
 		# Equal aspect ratio ensures that pie is drawn as a circle.
 		self.ax1.axis('equal')
-		self.ax1.set_title("Gesamtanzahl der Impfungen: %s" % (self.tests), pad=32)
+		self.ax1.set_title("Gesamtanzahl der Impfungen: %s" % (self.total), pad=32)
 		plt.savefig('tmp/' + str(self.date) + '.png', dpi=(170))
 
 

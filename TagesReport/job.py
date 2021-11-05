@@ -30,7 +30,7 @@ if __name__ == "__main__":
             logger.debug('Input parameters are not correct, date and/or requested needed')
             raise Exception
         DatabaseConnect = Database()
-        sql = "Select count(Voranmeldung.id), Impfstoff.Kurzbezeichnung from Voranmeldung LEFT JOIN Termine ON Termine.id=Voranmeldung.Termin_id LEFT JOIN Station ON Station.id=Termine.id_station LEFT JOIN Impfstoff ON Impfstoff.id=Station.Impfstoff_id GROUP BY Impfstoff.id where Voranmeldung.Used=1 and Voranmeldung.Tag Between '%s 00:00:00' and '%s 23:59:59';" % (requestedDate.replace('-', '.'), requestedDate.replace('-', '.'))
+        sql = "Select count(Voranmeldung.id), Impfstoff.Kurzbezeichnung from Voranmeldung LEFT JOIN Termine ON Termine.id=Voranmeldung.Termin_id LEFT JOIN Station ON Station.id=Termine.id_station LEFT JOIN Impfstoff ON Impfstoff.id=Station.Impfstoff_id where Voranmeldung.Tag Between '%s 00:00:00' and '%s 23:59:59' GROUP BY Impfstoff.id;" % (requestedDate.replace('-', '.'), requestedDate.replace('-', '.'))
         logger.debug('Getting all Events for a date with the following query: %s' % (sql))
         exportEvents = DatabaseConnect.read_all(sql)
         logger.debug('Received the all entries: %s' %(str(exportEvents)))

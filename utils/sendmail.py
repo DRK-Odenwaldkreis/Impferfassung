@@ -51,7 +51,7 @@ def send_mail_report(filenames, day, recipients):
             part.set_payload((attachment).read())
             encoders.encode_base64(part)
             part.add_header(
-                'Content-Disposition', "attachment; filename= " + item.replace('../../Reports/', ''))
+                'Content-Disposition', "attachment; filename= " + item.replace('../../Reports/Impfzentrum/', ''))
             message.attach(part)
         logging.debug("Starting SMTP Connection")
         smtp = smtplib.SMTP(SMTP_SERVER, port=587)
