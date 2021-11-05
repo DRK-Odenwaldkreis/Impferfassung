@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-# This file is part of DRK Impfterminerfassung.
+# This file is part of DRK Testzentrum.
 
 import matplotlib.pyplot as plt
 import sys
@@ -27,7 +27,7 @@ class MyPDF(FPDF):
 	def header(self):
 		self.add_font('GNU', '', FreeSans, uni=True)
 		self.set_font('GNU', '', 11)
-		self.cell(40, 10, 'Impfzentrum des DRK Odenwaldkreis:', ln=1)
+		self.cell(40, 10, 'Impfzentrum DRK KV Odenwaldkreis e.V.:', ln=1)
 		self.image(Logo, x=7, y=10, w=100, h=24, type='PNG')
 		self.ln(20)
 
@@ -47,10 +47,6 @@ class PDFgenerator:
 	def __init__(self, content, date):
 		self.content=content
 		self.date=date
-
-		# Pie chart, where the slices will be ordered and plotted counter-clockwise:
-		self.labels = self.content[0]
-		self.sizes = self.content[1]
 		self.fig1, self.ax1 = plt.subplots()
 		self.ax1.pie(self.sizes, explode=self.explode, labels=self.labels, autopct=lambda p: '{:.2f}%  ({:,.0f})'.format(p, p * sum(self.sizes)/100),
                     shadow=True, startangle=90)
@@ -59,11 +55,10 @@ class PDFgenerator:
 		self.ax1.set_title("Gesamtanzahl der Impfungen: %s" % (self.tests), pad=32)
 		plt.savefig('tmp/' + str(self.date) + '.png', dpi=(170))
 
+
 	def generate(self):
 
 		pdf=MyPDF()
-		#pdf.time=self.date
-		# pdf.name=self.name
 		pdf.alias_nb_pages()
 		pdf.add_page()
 		pdf.set_auto_page_break(True, 25)
@@ -80,7 +75,6 @@ class PDFgenerator:
 		pdf.set_font('GNU', 'B' , 20)
 		pdf.ln(15)
 		pdf.set_font('GNU', 'B', 14)
-		pdf.cell(35, 10, 'Testzentrum: %s, %s' %(self.station,self.address), 0, 1)
 
 		current_x =pdf.get_x()
 		current_y =pdf.get_y()
@@ -90,7 +84,7 @@ class PDFgenerator:
 		pdf.image('tmp/' + str(self.date) + '.png', w=210, h=160)
 		os.remove('tmp/'+str(self.date) + '.png')
 		pdf.set_font('GNU', '', 14)
-		self.filename = "../../Reports/Tagesreport_Impfzentrum_" + str(self.date) + ".pdf"
+		self.filename = "../../Reports/Impfzentrum/Tagesreport_Impfen_" +str(self.date) + ".pdf"
 		pdf.output(self.filename)
 		return self.filename
 

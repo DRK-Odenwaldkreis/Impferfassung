@@ -18,13 +18,6 @@ logging.basicConfig(level=logging.INFO,
 logger = logging.getLogger('Tagesreport')
 logger.info('Starting Tagesreporting')
 
-
-def create_PDFs(content, date):
-
-    logger.debug('Calculated this total number of tests: %s' % (str(tests)))
-    
-    return PDF.generate()
-
 if __name__ == "__main__":
     try:
         if len(sys.argv)  == 2:
@@ -37,15 +30,15 @@ if __name__ == "__main__":
             logger.debug('Input parameters are not correct, date and/or requested needed')
             raise Exception
         DatabaseConnect = Database()
-        sql = "Select Count(Voranmeldung.id),Impfstoff.Kurzbezeichnung from Voranmeldung JOIN Termine ON Voranmeldung.Termin_id=Termine.id JOIN Station ON Station.id=Termine.id_station JOIN Impfstoff ON Impfstoff.id=Station.Impfstoff_id where Voranmeldung.Tag='%s' and Voranmeldung.Used=1 ORDER BY Impfstoff.id;" % (requestedDate.replace('-', '.'))
+        sql = "Select count(Voranmeldung.id), Impfstoff.Kurzbezeichnung from Voranmeldung LEFT JOIN Termine ON Termine.id=Voranmeldung.Termin_id LEFT JOIN Station ON Station.id=Termine.id_station LEFT JOIN Impfstoff ON Impfstoff.id=Station.Impfstoff_id GROUP BY Impfstoff.id where Voranmeldung.Used=1 and Voranmeldung.Tag Between '%s 00:00:00' and '%s 23:59:59';" % (requestedDate.replace('-', '.'), requestedDate.replace('-', '.'))
         logger.debug('Getting all Events for a date with the following query: %s' % (sql))
         exportEvents = DatabaseConnect.read_all(sql)
         logger.debug('Received the all entries: %s' %(str(exportEvents)))
         PDF = PDFgenerator(exportEvents, f"{requestedDate}")
         filename = PDF.generate()
         if send:
-                logger.debug('Sending Mail')
-                send_mail_report(filename,requestedDate,get_Leitung_from_StationID(0))
+            logger.debug('Sending Mail')
+            send_mail_report(filename,requestedDate,get_Leitung_from_StationID(0))
         logger.info('Done')
     except Exception as e:
         logging.error("The following error occured: %s" % (e))
