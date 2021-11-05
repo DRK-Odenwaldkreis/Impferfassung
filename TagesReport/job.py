@@ -13,7 +13,7 @@ from utils.getRequesterMail import get_Leitung_from_StationID
 
 
 logFile = '../../Logs/Impfzentrum/TagesreportJob.log'
-logging.basicConfig(level=logging.INFO,
+logging.basicConfig(filename=logFile,level=logging.INFO,
                     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 logger = logging.getLogger('Tagesreport')
 logger.info('Starting Tagesreporting')
