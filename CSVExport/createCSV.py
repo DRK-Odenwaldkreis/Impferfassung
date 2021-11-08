@@ -6,6 +6,7 @@
 import sys
 import csv
 import logging
+from utils.slot import get_slot_time
 
 from datetime import datetime
 sys.path.append("..")
@@ -25,8 +26,16 @@ def create_CSV(content, date):
                              "Telefonnummer",
                              "Mailadresse",
                              "Impfstoff",
-                             "Datum"
+                             "Datum",
+                             "Uhrzeit"
                              ])
         for i in content:
-            writeEntry.writerow(i)
+            j = list(i)
+            slot = j[8]
+            stunde = j[7]
+            j.pop()
+            j.pop()
+            j.append(get_slot_time(slot,stunde))
+            writeEntry.writerow(j)
     return filename
+
