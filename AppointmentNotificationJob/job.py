@@ -24,7 +24,7 @@ logger.info('Starting Ticketgeneration')
 if __name__ == "__main__":
     try:
         DatabaseConnect = Database()
-        sql = "Select Voranmeldung.Vorname, Voranmeldung.Nachname, Voranmeldung.Mailadresse, Termine.Slot, Termine.Stunde, Voranmeldung.Tag, Voranmeldung.Token, Voranmeldung.id, Station.Ort, Station.Adresse, Termine.opt_station_adresse, Termine.opt_station, Impfstoff.Kurzbezeichnung from Voranmeldung JOIN Termine ON Termine.id=Voranmeldung.Termin_id JOIN Station ON Termine.id_station=Station.id JOIN Impfstoff ON Impfstoff.id=Station.Impfstoff_id where Voranmeldung.Token is not NULL and Voranmeldung.Mailsend = 0;"
+        sql = "Select Voranmeldung.Vorname, Voranmeldung.Nachname, Voranmeldung.Mailadresse, Termine.Slot, Termine.Stunde, Voranmeldung.Tag, Voranmeldung.Token, Voranmeldung.id, Station.Ort, Station.Adresse, Termine.opt_station_adresse, Termine.opt_station, Impfstoff.Kurzbezeichnung from Voranmeldung JOIN Termine ON Termine.id=Voranmeldung.Termin_id JOIN Station ON Termine.id_station=Station.id JOIN Impfstoff ON Impfstoff.id=Station.Impfstoff_id where Voranmeldung.Token is not NULL and Voranmeldung.Mailsend = 0 and Voranmeldung.Mailadresse is not NULL;"
         content = DatabaseConnect.read_all(sql)
         logger.debug('Received the following recipients: %s' %(str(content)))
         for i in content:
