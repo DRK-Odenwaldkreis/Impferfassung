@@ -2,7 +2,7 @@
 
 /* **************
 
-Websystem für das Impfzentrum DRK Odenwaldkreis
+Websystem für das Testzentrum DRK Odenwaldkreis
 Author: Marc S. Duchene
 March 2021
 
@@ -23,6 +23,20 @@ require_once 'lib/passwordLib.php';
 
 // Include secondary files
 include 'menu.php';
+
+if($GLOBALS['FLAG_MODE_MAIN'] == 1) {
+    $name_facility='Testzentrum';
+    $email_reset_facility='info@testzentrum-odenwald.de';
+    $logo_facility='logo.png';
+} elseif($GLOBALS['FLAG_MODE_MAIN'] == 2) {
+    $name_facility='Impfzentrum';
+    $email_reset_facility='info@testzentrum-odenwald.de';
+    $logo_facility='impfzentrum.jpg';
+} elseif($GLOBALS['FLAG_MODE_MAIN'] == 3) {
+    $name_facility='Antikörpertest';
+    $email_reset_facility='info@testzentrum-odenwald.de';
+    $logo_facility='impfzentrum.jpg';
+}
 
 // Get Server and Path values
 $hostname = $_SERVER['HTTP_HOST'];
@@ -289,17 +303,17 @@ if( isset($_POST['button-reset']) ) {
 		S_set_data($Db,'INSERT INTO li_token (id_user,timestamp,token) VALUES ('.$uid.',\''.$timestamp.'\',\''.$tokenhash.'\');');
 		$token_id=S_get_entry($Db,'SELECT id FROM li_token WHERE id_user='.$uid.' AND timestamp=\''.$timestamp.'\' AND token=\''.$tokenhash.'\';');
 		
-		$header = "From: info@Impfzentrum-odenwald.de\r\n";
+		$header = "From: $email_reset_facility\r\n";
 		$header .= "Content-Type: text/plain; charset=UTF-8\nContent-Transfer-Encoding: 8bit";
 		$content="Lieber Nutzer, liebe Nutzerin,\n
-es wurde eine Anfrage zum Zurücksetzen Ihres Passwortes für das Websystem des DRK Covid-19 Impfzentrum gestellt. Falls diese Anfrage von Ihnen nicht initiiert wurde, können Sie diese Nachricht ignorieren.\n
+es wurde eine Anfrage zum Zurücksetzen Ihres Passwortes für das Websystem des DRK Covid-19 $name_facility gestellt. Falls diese Anfrage von Ihnen nicht initiiert wurde, können Sie diese Nachricht ignorieren.\n
 Bitte mit diesem Link das Passwort neu setzen:\n";
 		$content.=$FLAG_http.'://'.$hostname.($path == '/' ? '' : $path)."/login.php?u=$uid&t=$token&tid=$token_id";
 		$content.="\n\n
 Mit freundlichen Grüßen\n
 Das Team vom DRK";
-		$title='DRK Covid-19 Impfzentrum Odenwaldkreis - Passwort zurücksetzen';
-		$res=mail($email, $title, $content, $header, "-r info@Impfzentrum-odenwald.de");
+		$title='DRK Covid-19 '.$name_facility.' Odenwaldkreis - Passwort zurücksetzen';
+		$res=mail($email, $title, $content, $header, "-r $email_reset_facility");
 		
 		
 	}
@@ -500,6 +514,10 @@ html5QrCode.start({ facingMode: "environment" }, config, qrCodeSuccessCallback);
 
 echo '<div style="padding-top:25px;"></div>';
 
+
+
+
+
 // /////////
 //   Boxes
 // /////////
@@ -508,7 +526,7 @@ echo '<div style="padding-top:25px;"></div>';
 echo $html_box_login;
 echo '</div>';
 
-echo '<div><img style="display: block; margin-left: auto; margin-right: auto; width: 40%;" src="../img/logo.png"></img></div>';
+echo '<div><img style="display: block; margin-left: auto; margin-right: auto; width: 30%; border: solid 1px #5a482d;" src="../img/'.$logo_facility.'"></img></div>';
 
 echo '</div>';
 echo '</div>';

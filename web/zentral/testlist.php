@@ -2,7 +2,7 @@
 
 /* **************
 
-Websystem für das Impfzentrum DRK Odenwaldkreis
+Websystem für das Testzentrum DRK Odenwaldkreis
 Author: Marc S. Duchene
 April 2021
 
@@ -114,7 +114,7 @@ if( A_checkpermission(array(1,2,0,4,5)) ) {
     // Print html header
     //echo $GLOBALS['G_html_header'];
     echo '<head>
-    <title>Testliste - DRK Covid-19 Impfzentrum Odenwaldkreis</title>
+    <title>Testliste - DRK Covid-19 Testzentrum Odenwaldkreis</title>
     <!-- Required meta tags -->
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
@@ -122,9 +122,21 @@ if( A_checkpermission(array(1,2,0,4,5)) ) {
     <link rel="shortcut icon" href="img/favicon.png" type="image/x-ico; charset=binary" />
     <link rel="icon" href="img/favicon.png" type="image/x-ico; charset=binary" />
 
-    <link href="css/bootstrap.css" rel="stylesheet">
-    <!-- Custom styles for this template -->
-    <link href="css/dashboard.css" rel="stylesheet">
+    ';
+
+    if($GLOBALS['FLAG_MODE_MAIN'] == 1) {
+      echo'
+      <link href="css/bootstrap_red.css" rel="stylesheet">
+      <!-- Custom styles for this template -->
+      <link href="css/dashboard_red.css" rel="stylesheet">';
+    } else {
+      echo'
+      <link href="css/bootstrap.css" rel="stylesheet">
+      <!-- Custom styles for this template -->
+      <link href="css/dashboard.css" rel="stylesheet">';
+    }
+    
+    echo'
     <link href="css/symbols-fair.css" rel="stylesheet">
     
     <script type="text/javascript" src="lib/datatables/jQuery-3.3.1/jquery-3.3.1.min.js"></script>
@@ -269,6 +281,7 @@ if( A_checkpermission(array(1,2,0,4,5)) ) {
       $text_result_download='';
     }
 
+
     // //////////////////
     // Result delivered
     $text_result_delivered='';
@@ -377,6 +390,7 @@ if( A_checkpermission(array(1,2,0,4,5)) ) {
     } else {
       if($i[25]==1 && $i[12]==5) {
         // is PCR and no result - button to set a result
+        $text_result_download.='<a class="list-group-item list-group-item-action list-group-item-redtext" target="_blank" href="edit_person.php?label=download&id='.$i[2].'"><span class="icon-print"></span>&nbsp;Label</a>';
         $pcr_button='<a class="list-group-item list-group-item-action list-group-item-redtext" target="_blank" href="scan.php?scan=K'.$i[2].'&scan_send=Senden"><span class="icon-lab"></span>&nbsp;Erg&nbsp;setzen</a>';
       } else { $pcr_button=''; }
       echo '<td class="FAIR-data-height2 FAIR-data-right FAIR-data-left FAIR-data-bottom FAIR-data-top" style="background-color:rgb('.$color_st_code.');"><abbr title="'.$i[24].'">S'.$i[1].'/'.substr($i[24],0,10).'</abbr></td>

@@ -2,7 +2,7 @@
 
 /* **************
 
-Websystem für das Impfzentrum DRK Odenwaldkreis
+Websystem für das Testzentrum DRK Odenwaldkreis
 Author: Marc S. Duchene
 March 2021
 
@@ -180,6 +180,74 @@ function S_set_entry_voranmeldung ($Db,$array_data) {
 	return $result2; // need id as a return value
 	
 }
+function S_set_entry_voranmeldung_vaccinate ($Db,$array_data) {
+	// First, check if Termin_id is already used by same person (  to fix a bug found by N.B. <3  )
+	if($array_data[4]=='') {
+		$stmt=mysqli_prepare($Db,"SELECT id FROM Voranmeldung WHERE Vorname=? AND Nachname=? AND Telefon=? AND Tag=?;");
+		mysqli_stmt_bind_param($stmt, "sssssss", $array_data[0], $array_data[1], $array_data[3], $array_data[6]);
+	} else {
+		$stmt=mysqli_prepare($Db,"SELECT id FROM Voranmeldung WHERE Vorname=? AND Nachname=? AND Telefon=? AND Mailadresse=? AND Tag=?;");
+		mysqli_stmt_bind_param($stmt, "ssssssss", $array_data[0], $array_data[1], $array_data[3], $array_data[4], $array_data[6]);
+	}
+	mysqli_stmt_execute($stmt);
+	mysqli_stmt_bind_result($stmt, $double_entry_id);
+	mysqli_stmt_fetch($stmt);
+	mysqli_stmt_close($stmt);
+
+	if($double_entry_id>0) {
+		return 'DOUBLE_ENTRY';
+	}
+
+	// Second, check if Termin_id is already used by other person
+	$stmt=mysqli_prepare($Db,"SELECT id, Slot, id_station, Tag, Stunde FROM Termine WHERE id=?;");
+	mysqli_stmt_bind_param($stmt, "i", $array_data[5]);
+	mysqli_stmt_execute($stmt);
+	mysqli_stmt_bind_result($stmt, $termin_id, $termin_slot, $termin_station, $termin_tag, $termin_stunde);
+	mysqli_stmt_fetch($stmt);
+	mysqli_stmt_close($stmt);
+	if($termin_slot>0) {
+		$check_termin_id=S_get_entry($Db,'SELECT id FROM Voranmeldung WHERE Termin_id=CAST('.$termin_id.' as int);');
+	} else {
+		$check_termin_id=0;
+	}
+
+	if($check_termin_id>0) {
+		// Selected Termin is used, select another in same slot if available
+		$new_termin_id=S_get_entry($Db,'SELECT id FROM Termine WHERE id_station='.$termin_station.' AND Tag="'.$termin_tag.'" AND Stunde='.$termin_stunde.' AND Slot='.$termin_slot.' AND Used is null;');
+		if($new_termin_id>0) {
+			// is available - use new termin_id
+			$termin_id=$new_termin_id;
+		} else {
+			// is not available
+			return 'NOT_AVAILABLE';
+		}
+	} 
+	
+	// Write data because Termin_id is not used or Termin_id has no slots
+	if($termin_slot>0) {
+		S_set_data($Db,'UPDATE Termine SET Used=1 WHERE id=CAST('.$termin_id.' as int);');
+	}
+	if($array_data[4]=='') {
+		$stmt=mysqli_prepare($Db,"INSERT INTO Voranmeldung (Vorname, Nachname, Geburtsdatum, Telefon, Termin_id, Tag, Booster) VALUES (?,?,?,?,?,?,?);");
+		mysqli_stmt_bind_param($stmt, "ssssisi", $array_data[0], $array_data[1], $array_data[2], $array_data[3], $termin_id, $array_data[6], $array_data[7]);
+	} else {
+		$stmt=mysqli_prepare($Db,"INSERT INTO Voranmeldung (Vorname, Nachname, Geburtsdatum, Telefon, Mailadresse, Termin_id, Tag, Booster) VALUES (?,?,?,?,?,?,?,?);");
+		mysqli_stmt_bind_param($stmt, "sssssisi", $array_data[0], $array_data[1], $array_data[2], $array_data[3], $array_data[4], $termin_id, $array_data[6], $array_data[7]);
+	}
+	mysqli_stmt_execute($stmt);
+	mysqli_stmt_bind_result($stmt, $result);
+	mysqli_stmt_fetch($stmt);
+	mysqli_stmt_close($stmt);
+
+	$stmt=mysqli_prepare($Db,"SELECT id FROM Voranmeldung WHERE Vorname=? AND Nachname=? AND Telefon=? AND Termin_id=? AND Tag=? ORDER BY id DESC;");
+	mysqli_stmt_bind_param($stmt, "sssis", $array_data[0], $array_data[1], $array_data[3], $termin_id, $array_data[6]);
+	mysqli_stmt_execute($stmt);
+	mysqli_stmt_bind_result($stmt, $result2);
+	mysqli_stmt_fetch($stmt);
+	mysqli_stmt_close($stmt);
+	return $result2; // need id as a return value
+	
+}
 
 function S_get_entry_voranmeldung ($Db,$array_data) {
 	$stmt=mysqli_prepare($Db,"SELECT id_preregistration FROM Voranmeldung_Verif WHERE id_preregistration=? AND Token=?;");
@@ -224,6 +292,7 @@ function A_login_firmencode($Db,$sid) {
 	
 	$_SESSION['b2b_signedin'] = true;
 	$_SESSION['b2b_username'] = S_get_entry($Db,'SELECT Ort FROM Station WHERE id='.$sid.';');
+	$_SESSION['b2b_code'] = S_get_entry($Db,'SELECT Firmencode FROM Station WHERE id='.$sid.';');
 
     return true;
 }
@@ -246,7 +315,7 @@ function A_sanitize_input_light($input) {
 	/* if(preg_match("/^[a-zA-Z0-9\-\.@\,\+äöüÄÖÜßéèêóòôíìîáàâúùû&\/]+$/", $input)) {
 		$validated = $input;
 	} */
-	$whitelist=array('/^[a-zA-Z0-9äöüÄÖÜßéèêóòôíìîáàâúùû&\ \_\-\.@\,\+\/]+$/');
+	$whitelist=array('/^[a-zA-Z0-9äöüÄÖÜßéèêóòôíìîáàâúùû&\ \_\-\.@\,\:\+\/]+$/');
 	// Check if each character of input is in white list
 	foreach($whitelist as $k => $v) {
 		if(preg_match($v, $input)) {
@@ -433,9 +502,17 @@ function H_build_table_testdates2( $mode ) {
 	} elseif($mode=='pcr') {
 		$query_b2b='(Firmencode is null OR Firmencode="") AND Testtyp.IsPCR=1';
 		$path_to_reg='registration/';
-		
 	} elseif($mode=='ag') {
 		$query_b2b='(Firmencode is null OR Firmencode="") AND Testtyp.IsPCR=0';
+		$path_to_reg='registration/';
+	} elseif($mode=='vaccinate') {
+		$query_b2b='(Firmencode is null OR Firmencode="")';
+		$path_to_reg='registration/';
+	} elseif($mode=='b2b-vaccinate') {
+		$query_b2b='Station.Firmencode = (SELECT Station.Firmencode FROM Station WHERE Station.id='.$_SESSION['b2b_id'].')';
+		$path_to_reg='';
+	} elseif($mode=='antikoerper') {
+		$query_b2b='(Firmencode is null OR Firmencode="")';
 		$path_to_reg='registration/';
 	} else {
 		$query_b2b='Firmencode is null OR Firmencode=""';
@@ -446,9 +523,31 @@ function H_build_table_testdates2( $mode ) {
 	$res_s_array=array(); // for small displays - array with one element per day
 	$Db=S_open_db();
 	$flag_prereg=S_get_entry($Db,'SELECT value FROM website_settings WHERE name="FLAG_Pre_registration";');
-	$stations_array=S_get_multientry($Db,'SELECT Station.id, Station.Ort, Station.Adresse, Testtyp.IsPCR FROM Station JOIN Testtyp ON Testtyp.id=Station.Testtyp_id WHERE '.$query_b2b.';');
+	if($mode == 'vaccinate' || $mode == 'b2b-vaccinate') {
+		$stations_array=S_get_multientry($Db,'SELECT Station.id, Station.Ort, Station.Adresse, 1, Impfstoff.Kurzbezeichnung FROM Station 
+		JOIN Impfstoff ON Impfstoff.id=Station.Impfstoff_id WHERE '.$query_b2b.';');
+	} elseif($mode == 'antikoerper') {
+		$stations_array=S_get_multientry($Db,'SELECT Station.id, Station.Ort, Station.Adresse FROM Station WHERE '.$query_b2b.';');
+	} else {
+		$stations_array=S_get_multientry($Db,'SELECT Station.id, Station.Ort, Station.Adresse, Testtyp.IsPCR FROM Station JOIN Testtyp ON Testtyp.id=Station.Testtyp_id WHERE '.$query_b2b.';');
+	}
 	// X ist Anzahl an Tagen für Vorschau in Tabelle
-	$X=14;
+	if($mode == 'vaccinate') {
+		$last_date_for_calendar=S_get_entry($Db,'SELECT Termine.Tag FROM Termine 
+		JOIN Station ON Station.id=Termine.id_station
+		WHERE Station.Firmencode=""
+		ORDER BY Termine.Tag DESC;');
+		$diff=( strtotime($last_date_for_calendar) - strtotime(date('Y-m-d')) ) /(3600*24);
+		$X=$diff+2;
+		$Xx=28;
+		if($X>28) {$X=$Xx;} // max. Xx days
+	} elseif($mode == 'b2b-vaccinate') {
+		$Xx=35;
+		$X=$Xx;
+	} else {
+		$Xx=14;
+		$X=$Xx;
+	}
 	// Ohne Terminbuchung für nächste X Tage
 	$today=date('Y-m-d');
 	$in_x_days=date('Y-m-d', strtotime($today. ' + '.$X.' days'));
@@ -469,7 +568,7 @@ function H_build_table_testdates2( $mode ) {
 	$res.='<td class="FAIR-data-height2 FAIR-data-right FAIR-data-left FAIR-data-bottom FAIR-data-top FAIR-data-gray"></td></tr>';
 	if($mode=='ag') {
 		$res.='<tr>
-		<td class="FAIR-data-height1 FAIR-data-right FAIR-data-left FAIR-data-bottom FAIR-data-top FAIR-data-blue1" colspan="'.($X+2).'"><b><i>';
+		<td class="FAIR-data-height1 FAIR-data-right FAIR-data-left FAIR-data-bottom FAIR-data-top FAIR-data-yellow1" colspan="'.($X+2).'"><b><i>';
 		if($flag_prereg!=0) {
 			$res.='Für folgende Teststationen ist keine Terminbuchung notwendig, eine Voranmeldung Ihrer Daten kann gerne gemacht werden, dann geht es vor Ort schneller - bitte dafür einen Termin wählen';
 		} else {
@@ -479,16 +578,24 @@ function H_build_table_testdates2( $mode ) {
 		</tr>';
 	}
 	foreach($stations_array as $st) {
-		if($st[3]==1) {
-			$cal_color='red';
-		} else {
+		if($mode == 'vaccinate' || $mode == 'b2b-vaccinate') {
 			$cal_color='blue';
+		}if($mode == 'antikoerper') {
+			$cal_color='blue';
+		} elseif($st[3]==1) {
+			$cal_color='blue';
+		} else {
+			$cal_color='yellow';
 		}
 		// check if station has appointed times
 		if( S_get_entry($Db,'SELECT id_station FROM Termine WHERE Slot is null AND Date(Tag)>="'.$today.'" AND Date(Tag)<="'.$in_x_days.'" AND id_station='.$st[0].';')==$st[0]) {
 			$display_location_thirdline='';
 			$res.='<tr>';
-			$string_location='<b>'.$st[1].'</b><br>'.$st[2].'';
+			if($mode=='vaccinate' || $mode == 'b2b-vaccinate') {
+				$string_location='<b>'.$st[4].'</b><br>'.$st[1].'<br><span class="text-sm">'.$st[2].'</span>';
+			} else {
+				$string_location='<b>'.$st[1].'</b><br>'.$st[2].'';
+			}
 			$res.='<td class="FAIR-data-height2 FAIR-data-right FAIR-data-left FAIR-data-bottom FAIR-data-top FAIR-data-'.$cal_color.'2">'.$string_location.$display_location_thirdline.'</td>';
 			for($j=0;$j<$X;$j++) {
 				$in_j_days=date('Y-m-d', strtotime($today. ' + '.$j.' days'));
@@ -497,8 +604,13 @@ function H_build_table_testdates2( $mode ) {
 				$string_times_small='';
 				foreach($array_termine_open as $te) {
 					if($te[3]!='') {
-						$string_times.='<span class="text-sm">'.$te[3].'<br>'.$te[4].'</span><br>';
-						$string_location_small='<b>'.$te[3].'</b><br>'.$te[4].'';
+						if($mode == 'vaccinate' || $mode == 'b2b-vaccinate') {
+							$string_times.='<span class="text-sm">'.$st[4].'<br>'.$te[3].'<br>'.$te[4].'</span><br>';
+							$string_location_small='<b>'.$st[4].'</b><br>'.$te[3].', '.$te[4].'';
+						} else {
+							$string_times.='<span class="text-sm">'.$te[3].'<br>'.$te[4].'</span><br>';
+							$string_location_small='<b>'.$te[3].'</b><br>'.$te[4].'';
+						}
 					} else {
 						$string_location_small=$string_location;
 					}
@@ -524,10 +636,10 @@ function H_build_table_testdates2( $mode ) {
 					}
 					
 				} else {
-					$res.='<td class="FAIR-data-height2 FAIR-data-right FAIR-data-left FAIR-data-bottom FAIR-data-top FAIR-data-center1 FAIR-data-blue3"></td>';
+					$res.='<td class="FAIR-data-height2 FAIR-data-right FAIR-data-left FAIR-data-bottom FAIR-data-top FAIR-data-center1 FAIR-data-yellow3"></td>';
 				}
 			}
-			$res.='<td class="FAIR-data-height2 FAIR-data-right FAIR-data-left FAIR-data-bottom FAIR-data-top FAIR-data-center1 FAIR-data-blue3"></td>';
+			$res.='<td class="FAIR-data-height2 FAIR-data-right FAIR-data-left FAIR-data-bottom FAIR-data-top FAIR-data-center1 FAIR-data-yellow3"></td>';
 			$res.='</tr>';
 		}
 		
@@ -537,19 +649,31 @@ function H_build_table_testdates2( $mode ) {
 		if($mode!='b2b') {
 			if($mode=='pcr') {
 				$res.='<tr>
-				<td class="FAIR-data-height1 FAIR-data-right FAIR-data-left FAIR-data-bottom FAIR-data-top FAIR-data-red1" colspan="'.($X+2).'"><b>PCR-Testung: <i>Eine Terminbuchung ist notwendig</i></b></td>
+				<td class="FAIR-data-height1 FAIR-data-right FAIR-data-left FAIR-data-bottom FAIR-data-top FAIR-data-blue1" colspan="'.($X+2).'"><b>PCR-Testung: <i>Eine Terminbuchung ist notwendig</i></b></td>
+				</tr>';
+			} elseif($mode=='vaccinate' || $mode == 'b2b-vaccinate') {
+				$res.='<tr>
+				<td class="FAIR-data-height1 FAIR-data-right FAIR-data-left FAIR-data-bottom FAIR-data-top FAIR-data-blue1" colspan="'.($X+2).'"><b>Impfungen: <i>Eine Terminbuchung ist notwendig</i></b></td>
+				</tr>';
+			} elseif($mode=='antikoerper') {
+				$res.='<tr>
+				<td class="FAIR-data-height1 FAIR-data-right FAIR-data-left FAIR-data-bottom FAIR-data-top FAIR-data-blue1" colspan="'.($X+2).'"><b>Antikörpertest 30 €: <i>Eine Terminbuchung ist notwendig</i></b></td>
 				</tr>';
 			} else {
 				$res.='<tr>
-				<td class="FAIR-data-height1 FAIR-data-right FAIR-data-left FAIR-data-bottom FAIR-data-top FAIR-data-yellow1" colspan="'.($X+2).'"><b><i>Bei folgenden Teststationen ist eine Voranmeldung und Terminbuchung empfohlen - bitte einen Termin wählen</i></b></td>
+				<td class="FAIR-data-height1 FAIR-data-right FAIR-data-left FAIR-data-bottom FAIR-data-top FAIR-data-red1" colspan="'.($X+2).'"><b><i>Bei folgenden Teststationen ist eine Voranmeldung und Terminbuchung empfohlen - bitte einen Termin wählen</i></b></td>
 				</tr>';
 			}
 		}
 		foreach($stations_array as $st) {
-			if($st[3]==1) {
-				$cal_color='red';
+			if($mode == 'vaccinate' || $mode == 'b2b-vaccinate') {
+				$cal_color='blue';
+			} elseif($mode == 'antikoerper') {
+				$cal_color='blue';
+			} elseif($st[3]==1) {
+				$cal_color='blue';
 			} else {
-				$cal_color='yellow';
+				$cal_color='red';
 			}
 			// check if station has appointed times
 			if( S_get_entry($Db,'SELECT id_station FROM Termine WHERE Slot>0 AND Date(Tag)>="'.$today.'" AND Date(Tag)<="'.$in_x_days.'" AND id_station='.$st[0].';')==$st[0]) {
@@ -560,14 +684,33 @@ function H_build_table_testdates2( $mode ) {
 					$display_location_thirdline='';
 				}
 				$res.='<tr>';
-				$string_location='<b>'.$st[1].'</b><br>'.$st[2].'';
+				if($mode=='vaccinate' || $mode == 'b2b-vaccinate') {
+					$string_location='<b>'.$st[4].'</b><br>'.$st[1].'<br><span class="text-sm">'.$st[2].'</span>';
+				} else {
+					$string_location='<b>'.$st[1].'</b><br>'.$st[2].'';
+				}
 				$res.='<td class="FAIR-data-height2 FAIR-data-right FAIR-data-left FAIR-data-bottom FAIR-data-top FAIR-data-'.$cal_color.'2">'.$string_location.$display_location_thirdline.'</td>';
 				for($j=0;$j<$X;$j++) {
 					$in_j_days=date('Y-m-d', strtotime($today. ' + '.$j.' days'));
 					if($j==0) {
-						// TODAY do not show past entries
-						$current_hour=date('G');
-						$array_termine_open=S_get_multientry($Db,'SELECT count(id), count(Used) FROM Termine WHERE Slot>0 AND id_station='.$st[0].' AND Date(Tag)="'.$in_j_days.'" AND Stunde>='.$current_hour.';');
+						/* if($mode == 'vaccinate' || $mode == 'b2b-vaccinate') {
+							// TODAY do not show past entries AND do not show entries after certain hour of day has reached
+							$hour_limit_monfri=11;
+							$hour_limit_satsun=8;
+							$current_hour=date('G');
+							$current_dateinweek=date('w');
+							if( ( ($current_dateinweek==0 OR $current_dateinweek==6) AND $current_hour<$hour_limit_satsun ) 
+							OR ( ($current_dateinweek>0 AND $current_dateinweek<6) AND $current_hour<$hour_limit_monfri ) ) {
+								$array_termine_open=S_get_multientry($Db,'SELECT count(id), count(Used) FROM Termine WHERE Slot>0 AND id_station='.$st[0].' AND Date(Tag)="'.$in_j_days.'" AND Stunde>='.$current_hour.';');
+							} else {
+								$array_termine_open=array(0,0);
+							}
+						} else { */
+							// TODAY do not show past entries
+							$current_hour=date('G');
+							$current_slot=intval(date('i')/15);
+							$array_termine_open=S_get_multientry($Db,'SELECT count(id), count(Used) FROM Termine WHERE Slot>0 AND id_station='.$st[0].' AND Date(Tag)="'.$in_j_days.'" AND Stunde>='.$current_hour.' AND Slot>'.$current_slot.';');
+						/* } */
 					} else {
 						$array_termine_open=S_get_multientry($Db,'SELECT count(id), count(Used) FROM Termine WHERE Slot>0 AND id_station='.$st[0].' AND Date(Tag)="'.$in_j_days.'";');
 					}
@@ -591,12 +734,15 @@ function H_build_table_testdates2( $mode ) {
 						$res_s_array[$j][1].='<div class="cal-element calendar'.$cal_color.'" onclick="window.location=\''.$path_to_reg.'index.php?appointment='.($value_termine_id).'\'">'.$string_location.$display_location_thirdline.'<br>'.$string_times.$display_termine.'</div>';
 
 						$bool_valid_appointments_found=true;
+					} elseif($array_termine_open[0][0]>0) {
+						$res.='<td class="FAIR-data-height2 FAIR-data-right FAIR-data-left FAIR-data-bottom FAIR-data-top FAIR-data-center1 FAIR-data-'.$cal_color.'2"><span class="text-sm"><div style="display: block; margin-bottom: 5px;">alle Termine ausgebucht</div></span><div style="display: block; margin-top: 5px;"><span class="label label-danger">'.($array_termine_open[0][0]).'</span></div></td>';
+						$res_s_array[$j][1].='<div class="cal-element"><div style="display: block; margin-top: 5px;">'.$string_location.'</div><span class="text-sm"><div style="display: block; margin-top: 5px;">Alle Termine ausgebucht</div></span><div style="display: block; margin-top: 5px; margin-bottom: 5px;"><span class="label label-danger">'.($array_termine_open[0][0]).'</span></div></div>';
 					} else {
-						$res.='<td class="FAIR-data-height2 FAIR-data-right FAIR-data-left FAIR-data-bottom FAIR-data-top FAIR-data-center1 FAIR-data-yellow3"></td>';
+						$res.='<td class="FAIR-data-height2 FAIR-data-right FAIR-data-left FAIR-data-bottom FAIR-data-top FAIR-data-center1 FAIR-data-red3"></td>';
 					}
 				}
 				//$res.='<td onclick="window.location=\''.$path_to_reg.'index.php?appointment_more='.($st[0]).'\'" class="FAIR-data-height2 FAIR-data-right FAIR-data-left FAIR-data-bottom FAIR-data-top FAIR-data-center1 FAIR-data-yellow2 calendaryellow">Weitere Termine</td>';
-				$res.='<td class="FAIR-data-height2 FAIR-data-right FAIR-data-left FAIR-data-bottom FAIR-data-top FAIR-data-center1 FAIR-data-yellow3"></td>';
+				$res.='<td class="FAIR-data-height2 FAIR-data-right FAIR-data-left FAIR-data-bottom FAIR-data-top FAIR-data-center1 FAIR-data-red3"></td>';
 				$res.='</tr>';
 			}
 			
@@ -604,7 +750,8 @@ function H_build_table_testdates2( $mode ) {
 	}
 
 	if(!$bool_valid_appointments_found) {
-		$res.='<tr><td class="FAIR-data-height1 FAIR-data-right FAIR-data-left FAIR-data-bottom FAIR-data-top FAIR-data-center1" colspan="'.($X+2).'"><b>Keine Termine gefunden<b></td></tr>';
+		$res.='<tr><td class="FAIR-data-height1 FAIR-data-right FAIR-data-left FAIR-data-bottom FAIR-data-top FAIR-data-center1" colspan="'.($X+2).'"><b>Keine freien Termine in den nächsten '.$Xx.' Tagen gefunden</b></td></tr>';
+		$res_s_array[$j][0].='<div class="cal-element"><div style="display: block; margin-top: 5px;"><b>Keine freien Termine in den nächsten '.$Xx.' Tagen gefunden</b></div></div>';
 	}
 	
 	$res.='<tr>
