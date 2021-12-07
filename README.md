@@ -10,8 +10,8 @@ Eine Open Source Lösung zur Bereitstellnung von Impfterminen.
 - Automatische Löschung von personenbezogenen Daten nach erfolgter Durchführung
 
 <p float="center">
-  <img src="Pics/main.png" width="300" />
-  <img src="Pics/intern.png" width="300" /> 
+  <img src="Pics/main.png" width="600" />
+  <img src="Pics/intern.png" width="600" /> 
 </p>
 
 Bisher ist die Lösung sowohl für die Bereitstellung von Impfterminen als auch auf die Erfassung und Verarbeitung der Testergebnisse in den Testzentren des Odenwaldkreises optimiert. Die Komponenten sind jedoch flexibel genug gestaltet, dass auch andere Impfzentreuen/Testzentren damit betrieben werden können. Einzige Vorraussetzung ist ein Server mit LAMP Stack und TSL Zertifikaten.
