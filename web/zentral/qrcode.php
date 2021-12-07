@@ -1,7 +1,7 @@
 <?php
 /* **************
 
-Websystem für das Impfzentrum DRK Odenwaldkreis
+Websystem für das Testzentrum DRK Odenwaldkreis
 Author: Marc S. Duchene
 March 2021
 

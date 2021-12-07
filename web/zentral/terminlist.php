@@ -2,7 +2,7 @@
 
 /* **************
 
-Websystem für das Impfzentrum DRK Odenwaldkreis
+Websystem für das Testzentrum DRK Odenwaldkreis
 Author: Marc S. Duchene
 March 2021
 
@@ -51,6 +51,14 @@ if( A_checkpermission(array(1,2,0,4,5)) ) {
                 S_set_data($Db,'DELETE From Termine WHERE id_station='.$array_del_termin[0][0].' AND Tag=\''.$array_del_termin[0][1].'\';');
             }
             $station=$array_del_termin[0][0];
+        } elseif(isset($_POST['delete_termin_free1day'])) {
+            // Delete all unused Termine for one day
+            $termin_id=$_POST['termin_id'];
+            if($termin_id>0) {
+                $array_del_termin=S_get_multientry($Db,'SELECT id_station,Tag,Stunde,Slot FROM Termine WHERE id=CAST('.$termin_id.' as int);');
+                S_set_data($Db,'DELETE From Termine WHERE id_station='.$array_del_termin[0][0].' AND Tag=\''.$array_del_termin[0][1].'\' AND Used is null;');
+            }
+            $station=$array_del_termin[0][0];
         } elseif(isset($_POST['delete_termin_free1slot'])) {
             // Delete Termine in one slot with no reservation
             $termin_id=$_POST['termin_id'];
@@ -89,11 +97,14 @@ if( A_checkpermission(array(1,2,0,4,5)) ) {
 
     echo '<div class="row">';
 
-    
-    $stations_array=S_get_multientry($Db,'SELECT id, Ort, Adresse FROM Station;');
+    if($GLOBALS['FLAG_MODE_MAIN'] == 1 || $GLOBALS['FLAG_MODE_MAIN'] == 3) {
+        $stations_array=S_get_multientry($Db,'SELECT id, Ort, Adresse FROM Station;');
+    } else {
+        $stations_array=S_get_multientry($Db,'SELECT Station.id, Station.Ort, Station.Adresse, Impfstoff.Kurzbezeichnung FROM Station JOIN Impfstoff ON Impfstoff.id=Station.Impfstoff_id;');
+    }
     $today=date("Y-m-d",time());
     
-    echo '<div class="col-sm-3">
+    echo '<div class="col-sm-5">
       <div class="card">';
     if( A_checkpermission(array(1,0,0,0,5)) && !A_checkpermission(array(0,2,0,4,0)) ) {
         echo '<p>Eigene Station S'.$_SESSION['station_id'].'/'.$_SESSION['station_name'].'</p>';
@@ -107,7 +118,11 @@ if( A_checkpermission(array(1,2,0,4,5)) ) {
         <option value="">Wähle Station...</option>
             ';
             foreach($stations_array as $i) {
-                $display=$i[1].' / S'.$i[0];
+                if($GLOBALS['FLAG_MODE_MAIN'] == 1 || $GLOBALS['FLAG_MODE_MAIN'] == 3) {
+                    $display=$i[1].' / S'.$i[0];
+                } else {
+                    $display=$i[3].' ('.$i[1].' / S'.$i[0].')';
+                }
                 if($i[0]==$station) {$selected="selected";} else {$selected="";}
                 echo '<option value="'.$i[0].'" '.$selected.'>'.$display.'</option>';
             }
@@ -225,7 +240,8 @@ if( A_checkpermission(array(1,2,0,4,5)) ) {
                 <div class="input-group">';
                 echo '<input type="text" value="'.$i[0].'" name="termin_id" style="display:none;">';
                 echo'<span class="input-group-btn">
-                    <input type="submit" class="btn btn-success" value="Freie Term. löschen" name="delete_termin_free1slot" />
+                    <input type="submit" class="btn btn-info" value="Alle freien Term. für S'.$station.' am '.date("d.m.",strtotime($i[1])).' löschen" name="delete_termin_free1day" />
+                    <input type="submit" class="btn btn-success" value="Freie Term. löschen" name="delete_" />
                     <input type="submit" class="btn btn-warning" value="Alle Term. löschen" name="delete_termin_all1slot" />
                     <input type="submit" class="btn btn-danger" value="Alle Term. für S'.$station.' am '.date("d.m.",strtotime($i[1])).' löschen" name="delete_termin_all1day" />
                     </span>';
@@ -253,7 +269,11 @@ if( A_checkpermission(array(1,2,0,4,5)) ) {
         echo '<div class="col-sm-12">
         <div class="card">
         <h3>Alle Stationen in den nächsten Tagen (inkl. Firmen)</h3>';
-        echo H_build_table_testdates_all('');
+        if($GLOBALS['FLAG_MODE_MAIN'] == 1 || $GLOBALS['FLAG_MODE_MAIN'] == 3) {
+            echo H_build_table_testdates_all('');
+        } else {
+            echo H_build_table_testdates_all('vaccinate');
+        }
         echo '</div></div>';
     }
 
