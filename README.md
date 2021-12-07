@@ -69,7 +69,7 @@ Am Tag der Impfung wird nochmals via Mail auf den Termin erinnert. In der Mail b
 
 ## Terminbuchung Intern
 
-Terminkontigente lassen sich mittels Passwort versehen, so dass diese z.B. nur fpr bestimmte Einrichtungen oder Unternehmen verwendet werden können. Auch kann dies z.B. von einer Hotline dazu verwendet werden Termine mit separatem Kontigent via Telefonanzubieten. Eine Mailadresse ist für interne Terminvergaben nicht verpflichtend. Hierbei entfällt dann der E-Mail Verifikationsschritt. Der Termin wird direkt gebucht.
+Terminkontigente lassen sich mittels Passwort versehen, so dass diese z.B. nur für bestimmte Einrichtungen oder Unternehmen verwendet werden können. Auch kann dies z.B. von einer Hotline dazu verwendet werden Termine mit separatem Kontigent via Telefonanzubieten. Eine Mailadresse ist für interne Terminvergaben nicht verpflichtend. Hierbei entfällt dann der E-Mail Verifikationsschritt. Der Termin wird direkt gebucht.
 
 ## Voranmeldung
 
@@ -89,14 +89,50 @@ Aus den Informationen der Voranmeldung wird sowohl eine Planung für den kommend
 # Backend
 
 ## NightlyAutoClean
+Damit alle Informationen gelöscht werden, welche nicht mehr benötigt werden, gibt es einen AutClean Service. Dieser wird idealerweise im cron täglich nach erfolgtem Reporting ausgeführt.
 
+Der Service löscht:
+
+* Alle Termine der Vergengenheit
+* Alle Personen die im Impfzentrum waren (Used=1)
+* Alle Personen in der Vergangenheit (Used=0)
 ## Notification und Reminder
+Der Notifier sendet nach erfolgter E-Mail Verifizierung eine Mail raus. Idealerweise wird dies via cron gesheduled (z.B: alle 2 Minuten)
+
+```shell
+1-59/5 * * * * cd /home/webservice/Impfterminerfassung/AppointmentNoficationJob && python3 job.py
+```
+Hierbei wird an alle Einträge mit gültigem Token (Mail wurde verifiziert) eine Mail versendet, sofern dies noch nicht geschehen ist (MailSend=0).
+
+Gleiche Logik wird ebenfalls für die Erinnerungsmails verwendet. Sofern noch nicht erinnert (Reminded=0) werden alle für den mitgegeben Tag mittels Mail erinnert.
+
+```shell
+8 * * * * cd /home/webservice/Impfterminerfassung/AppointmentReminderJob && python3 job.py DATUM
+```
 
 ## Cleaner
+Sofern bei der Registrierung keine korrekte Mail angegeben wurde wird der Termin wieder freigegeben. Hierbei muss sowohl der Eintrag in der verif Tabelle gelöscht, als auch die Voranmeldung entfernt und der Termineintrag auf Unused gesetzt werden. Der Cleaner übernimmt diese Aufgabe und wird idealerweise im cron alle 30 Minuten ausgeführt.
 
 ## CSV Export
+Dir Voranmeldungsliste kann exportiert werden. Das Ui stößt hierbei folgenden Befehl an
+
+```python
+python job.py DATUM
+```
+
+Die Exports werden in ../../Reports/Impfzentrum Directory abgelegt. Dieses muss angelegt sein.
 
 ## Tagesreport
+Zur Tagesauswertung für die Gesamtanzal geimpfter Personen wird ein Tagesreport erzeugt. Dieser wird automatisiert per Mail jede Nacht versendet und lässt sich im WebUI auch für jeden beliebigen Tag erzeugen.
+
+```python
+python job.py DATUM
+```
+
+Die Tagesreports werden in ../../Reports/Impfzentrum Directory abgelegt. Dieses muss angelegt sein.
+Der Tagesreport erzeugt ein Kuchendiagramm aus der Tagesstatistik.
+
+![Report](Pics/report.png)
 
 ## utils
 Hilfsfunktionen wie:
