@@ -1,4 +1,5 @@
 import logging
+from os import path,makedirs
 import locale
 import time
 import datetime
@@ -11,11 +12,19 @@ from utils.database import Database
 from utils.sendmail import send_mail_report
 from utils.getRequesterMail import get_Leitung_from_StationID
 
-
-logFile = '../../Logs/Impfzentrum/TagesreportJob.log'
-logging.basicConfig(level=logging.INFO,
-                    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
-logger = logging.getLogger('Tagesreport')
+try:
+    basedir = '../../Logs/Impfzentrum/'
+    logFile = f'{basedir}TagesreportJob.log'
+    if not path.exists(basedir):
+        print("Directory does not excist, creating it.")
+        makedirs(basedir)
+    if not path.exists(logFile):
+        print("File for logging does not excist, creating it.")
+        open('logFile', 'w+')
+    logging.basicConfig(filename=logFile,level=logging.INFO,format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+except Exception as e:
+    logging.basicConfig(level=logging.INFO,format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+logger = logging.getLogger(f'Tagesreport creation started on: {datetime.datetime.now()}')
 logger.info('Starting Tagesreporting')
 
 
@@ -88,6 +97,9 @@ if __name__ == "__main__":
                 send_mail_report(filename,requestedDate,get_Leitung_from_StationID(0))
         logger.info('Done')
     except Exception as e:
-        logging.error("The following error occured: %s" % (e))
+        logger.error(f'The following error occured: {e}')
     finally:
-        DatabaseConnect.close_connection()
+        try:
+            DatabaseConnect.close_connection()
+        except Exception as e:
+            logger.error(f'The following error occured in loop for unverified: {e}')
