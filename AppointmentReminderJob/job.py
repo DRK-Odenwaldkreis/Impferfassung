@@ -3,7 +3,7 @@
 
 # This file is part of DRK Impfzentrum.
 
-from os import path
+from os import path,makedirs
 import logging
 import sys
 sys.path.append("..")
@@ -12,11 +12,19 @@ from utils.sendmail import send_mail_reminder
 from utils.slot import get_slot_time
 import datetime
 
-logFile = '../../Logs/Impfzentrum/reminderJob.log'
-logging.basicConfig(filename=logFile,level=logging.INFO,
-                    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
-logger = logging.getLogger('Reminder job for appointment started on: %s'%(datetime.datetime.now()))
+try:
+    basedir = '../../Logs/Impfzentrum/'
+    logFile = f'{basedir}reminderJob.log'
+    if not path.exists(basedir):
+        makedirs(basedir)
+    if not path.exists(logFile):
+        open('logFile', 'w+')
+    logging.basicConfig(filename=logFile,level=logging.INFO,format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+except Exception as e:
+    logging.basicConfig(level=logging.INFO,format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+logger = logging.getLogger(f'Reminder job for appointment started on: {datetime.datetime.now()}')
 logger.info('Starting reminder of Appointments')
+
 
 if __name__ == "__main__":
     try:
@@ -26,13 +34,13 @@ if __name__ == "__main__":
             logger.debug('Input parameters are not correct, date needed')
             raise Exception
         DatabaseConnect = Database()
-        sql = "Select Voranmeldung.Vorname, Voranmeldung.Nachname, Voranmeldung.Mailadresse, Termine.Slot, Termine.Stunde, Voranmeldung.Tag, Voranmeldung.Token, Voranmeldung.id, Station.Ort, Station.Adresse, Termine.opt_station_adresse, Termine.opt_station, Impfstoff.Kurzbezeichnung from Voranmeldung JOIN Termine ON Termine.id=Voranmeldung.Termin_id JOIN Station ON Termine.id_station=Station.id JOIN Impfstoff ON Impfstoff.id=Station.Impfstoff_id where Voranmeldung.Tag Between '%s 00:00:00' and '%s 23:59:59' and Reminded = 0 and Voranmeldung.Token is not NULL and Voranmeldung.Mailadresse is not NULL;" % (requestedDate,requestedDate)
-        logger.debug('Getting all appointments for %s, using the following query: %s' % (requestedDate,sql))
+        sql = f"Select Voranmeldung.Vorname, Voranmeldung.Nachname, Voranmeldung.Mailadresse, Termine.Slot, Termine.Stunde, Voranmeldung.Tag, Voranmeldung.Token, Voranmeldung.id, Station.Ort, Station.Adresse, Termine.opt_station_adresse, Termine.opt_station, Impfstoff.Kurzbezeichnung from Voranmeldung JOIN Termine ON Termine.id=Voranmeldung.Termin_id JOIN Station ON Termine.id_station=Station.id JOIN Impfstoff ON Impfstoff.id=Station.Impfstoff_id where Voranmeldung.Tag Between '{requestedDate} 00:00:00' and '{requestedDate} 23:59:59' and Reminded = 0 and Voranmeldung.Token is not NULL and Voranmeldung.Mailadresse is not NULL;"
+        logger.debug(f'Getting all appointments for {requestedDate}, using the following query: {sql}')
         recipients = DatabaseConnect.read_all(sql)
-        logger.debug('Received the following recipients: %s' %(str(recipients)))
+        logger.debug(f'Received the following recipients: {str(recipients)}')
         for i in recipients:
             try:
-                logger.debug('Received the following entry: %s' %(str(i)))
+                logger.debug(f'Received the following entry: {str(i)}')
                 slot = i[3]
                 vorname = i[0]
                 nachname = i[1]
@@ -47,23 +55,26 @@ if __name__ == "__main__":
                 opt_adress = i[11]
                 impfstoff = i[12]
                 if slot:
-                    appointment = 'um ' + get_slot_time(slot,stunde) + ' Uhr'
+                    appointment = f'um {get_slot_time(slot,stunde)} Uhr'
                 else:
                     appointment = ''
                 if len(opt_ort) == 0 and len(opt_adress) == 0:
-                    location = str(ort) + ", " + str(adress)
+                    location = f'{str(ort)}, {str(adress)}'
                 else:
-                    location = str(opt_ort) + "," + str(opt_adress)
+                    location = f'{str(opt_ort)}, {str(opt_adress)}'
                 logger.debug('Handing over to sendmail of reminder')
-                url = "https://impfzentrum-odw.de/registration/index.php?cancel=cancel&t=%s&i=%s" % (token, entry)
+                url = f'https://impfzentrum-odw.de/registration/index.php?cancel=cancel&t={token}&i={entry}'
                 if send_mail_reminder(mail, date, vorname, nachname, appointment, impfstoff, url, location):
                     logger.debug('Mail was succesfully send, closing entry in db')
-                    sql = "Update Voranmeldung SET Reminded = 1 WHERE id = %s;" % (entry)
+                    sql = f'Update Voranmeldung SET Reminded = 1 WHERE id = {entry};'
                     DatabaseConnect.update(sql)
             except Exception as e:
-                logging.error("The following error occured in loop of recipients: %s" % (e))
+                logger.error(f'The following error occured in loop of recipients: {e}')
         logger.info('Done for all')
     except Exception as e:
-        logging.error("The following error occured: %s" % (e))
+        logger.error(f'The following error occured: {e}')
     finally:
-        DatabaseConnect.close_connection()
+        try:
+            DatabaseConnect.close_connection()
+        except Exception as e:
+            logger.error(f'The following error occured in loop for unverified: {e}')

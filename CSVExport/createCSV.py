@@ -6,6 +6,7 @@
 import sys
 import csv
 import logging
+from os import path,makedirs
 from utils.slot import get_slot_time
 
 from datetime import datetime
@@ -17,7 +18,10 @@ logger.debug('Logger for createCSV was initialised')
 
 
 def create_CSV(content, date):
-    filename = "../../Reports/Impfzentrum/export_" + str(date) + ".csv"
+    basedir = f'../../Reports/Impfzentrum/'
+    filename = f'{basedir}../../Reports/Impfzentrum/export_{str(date)}.csv'
+    if not path.exists(basedir):
+        makedirs(basedir)
     with open(filename, mode='w', newline='') as csvfile:
         writeEntry = csv.writer(csvfile, delimiter=';')
         writeEntry.writerow(["id",
@@ -33,7 +37,9 @@ def create_CSV(content, date):
                              "Datum",
                              "Uhrzeit"
                              ])
+        logger.debug('Writing entries!')
         for i in content:
+            logger.debug(f'Writing the following entry: {str(i)}')
             j = list(i)
             slot = j[-1]
             stunde = j[-2]

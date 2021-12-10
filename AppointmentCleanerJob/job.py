@@ -3,7 +3,7 @@
 
 # This file is part of DRK Impfzentrum.
 
-from os import path
+from os import path,makedirs
 import logging
 import sys
 sys.path.append("..")
@@ -12,10 +12,19 @@ from utils.sendmail import send_mail_reminder
 from utils.slot import get_slot_time
 import datetime
 
-logFile = '../../Logs/Impfzentrum/clean.log'
-logging.basicConfig(filename=logFile,level=logging.INFO,
-                    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
-logger = logging.getLogger('Cleaning for not verified appointments started on: %s'%(datetime.datetime.now()))
+try:
+    basedir = '../../Logs/Impfzentrum/'
+    logFile = f'{basedir}clean.log'
+    if not path.exists(basedir):
+        print("Directory does not excist, creating it.")
+        makedirs(basedir)
+    if not path.exists(logFile):
+        print("File for logging does not excist, creating it.")
+        open('logFile', 'w+')
+    logging.basicConfig(filename=logFile,level=logging.INFO,format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+except Exception as e:
+    logging.basicConfig(level=logging.INFO,format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+logger = logging.getLogger(f'Cleaning for not verified appointments started on: {datetime.datetime.now()}')
 logger.info('Starting cleaner of unverified appointments')
 
 if __name__ == "__main__":
@@ -28,21 +37,24 @@ if __name__ == "__main__":
         for i in unverified:
             try:
                 termine_id = i[2]
-                sql = "Update Termine SET Used = NULL where id=%s;"%(termine_id)
-                logger.debug('Finding used Termin setting back to NULL using the following query: %s' % (sql))
+                sql = f'Update Termine SET Used = NULL where id={termine_id};'
+                logger.debug(f'Finding used Termin setting back to NULL using the following query: {sql}')
                 DatabaseConnect.update(sql)
                 voranmeldung_id = i[1]
-                sql = "Delete from Voranmeldung where id=%s;"%(voranmeldung_id)
-                logger.debug('Deleting Voranmeldung using the following query: %s' % (sql))
+                sql = f'Delete from Voranmeldung where id={voranmeldung_id};'
+                logger.debug(f'Deleting Voranmeldung using the following query: {sql}')
                 DatabaseConnect.delete(sql)
                 verif_id=i[0]
-                sql = "Delete from Voranmeldung_Verif where id=%s;"%(verif_id)
-                logger.debug('Deleting Verif entry using the following query: %s' % (sql))
+                sql = f'Delete from Voranmeldung_Verif where id={verif_id};'
+                logger.debug(f'Deleting Verif entry using the following query: {sql}')
                 DatabaseConnect.delete(sql)
             except Exception as e:
-                logging.error("The following error occured in loop for unverified: %s" % (e))
+                logger.error(f'The following error occured in loop for unverified: {e}')
         logger.info('Done for all')
     except Exception as e:
-        logging.error("The following error occured: %s" % (e))
+        logger.error(f'The following error occured in loop for unverified: {e}')
     finally:
-        DatabaseConnect.close_connection()
+        try:
+            DatabaseConnect.close_connection()
+        except Exception as e:
+            logger.error(f'The following error occured in loop for unverified: {e}')
