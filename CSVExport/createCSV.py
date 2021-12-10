@@ -25,7 +25,10 @@ def create_CSV(content, date):
                              "Vorname",
                              "Telefonnummer",
                              "Mailadresse",
+                             "Geburtsdatum",
+                             "Alter",
                              "Impfstoff",
+                             "Booster",
                              "Ort",
                              "Datum",
                              "Uhrzeit"
