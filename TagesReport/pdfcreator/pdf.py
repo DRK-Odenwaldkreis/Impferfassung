@@ -96,9 +96,8 @@ class PDFgenerator:
 			self.sizes = np.array(self.sizes)
 			self.ax[0,1].pie(self.sizes, labeldistance=2.0,pctdistance=3.5,labels=self.labels, autopct=lambda p: '{:.2f}%  ({:,.0f})'.format(p, p * sum(self.sizes)/100),shadow=False, startangle=90)		
 		except:
-			self.sizes = [0,0]
-			self.labels = ["Basis","Booster"]
-			self.ax[0,1].pie(self.sizes, labeldistance=2.0,pctdistance=3.5,labels=self.labels, autopct=lambda p: '{:.2f}%  ({:,.0f})'.format(p, p * sum(self.sizes)/100),shadow=False, startangle=90)		
+			pass
+			
 
 
 		# Histogram Altersverteilung
@@ -111,9 +110,10 @@ class PDFgenerator:
 		except:
 			self.ax[1,0].set_xlabel("Alter")
 			self.ax[1,0].set_ylabel("Anzahl")
-			self.ax[1,0].set_title("Altersschnitt: ")
+			self.ax[1,0].axis(ymin=0,ymax=10,xmin=0,xmax=10)
+			self.ax[1,0].set_title("Altersschnitt: x")
 
-			# Histogram Altersverteilung
+			# Histogram Wartezeit
 		try:
 			self.sizes = []
 			for i in self.waiting:
@@ -126,7 +126,8 @@ class PDFgenerator:
 		except:
 			self.ax[1,1].set_xlabel("Tage")
 			self.ax[1,1].set_ylabel("Anzahl")
-			self.ax[1,1].set_title("Wartezeit bis Impfung:")
+			self.ax[1,1].axis(ymin=0,ymax=10,xmin=0,xmax=10)
+			self.ax[1,1].set_title("Wartezeit bis Impfung: x")
 
 		# Bar chart for No-show
 		try:
@@ -143,7 +144,7 @@ class PDFgenerator:
 			self.sizes = np.array(self.amount)
 			self.bar = self.ax[2,0].bar(self.labels, self.sizes)
 			self.ax[2,0].set_title("Nicht erschienen: %s" % (self.totalAmount))
-			self.ax[2,1].set_ylabel("Anzahl")
+			self.ax[2,0].set_ylabel("Anzahl")
 			self.ax[2,0].axis(ymin=0,ymax=np.max(self.sizes)*1.5)
 			self.ax[2,0].set_xticklabels(self.labels, rotation=30, ha='right',fontsize=6)
 			for bar in self.bar:
@@ -151,8 +152,9 @@ class PDFgenerator:
 				label_x_pos = bar.get_x() + bar.get_width() / 2
 				self.ax[2,0].text(label_x_pos, height, s=f'{height} ({round(height/(self.totalAmount)*100,1)}%)', ha='center',va='bottom',fontsize=6)
 		except:
-			self.ax[2,0].set_title("Nicht erschienen:" )
-			self.ax[2,1].set_ylabel("Anzahl")
+			self.ax[2,0].set_title("Nicht erschienen: x" )
+			self.ax[2,0].axis(ymin=0,ymax=10,xmin=0,xmax=10)
+			self.ax[2,0].set_ylabel("Anzahl")
 
 		# Bar chart for Extra Appointments
 		try:
@@ -177,7 +179,8 @@ class PDFgenerator:
 				self.ax[2,1].text(label_x_pos, height, s=f'{height} ({round(height/(self.totalAmount)*100,1)}%)', ha='center',va='bottom',fontsize=6)
 		except:
 			self.ax[2,1].set_ylabel("Anzahl")
-			self.ax[2,1].set_title("Nachrückertermine:")
+			self.ax[2,1].set_title("Nachrückertermine: x")
+			self.ax[2,1].axis(ymin=0,ymax=10,xmin=0,xmax=10)
 		plt.savefig('tmp/' + str(self.date) + '.png', dpi=(180))
 		
 	
