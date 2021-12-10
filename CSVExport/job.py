@@ -18,10 +18,8 @@ try:
     basedir = '../../Logs/Impfzentrum/'
     logFile = f'{basedir}CSVExportJob.log'
     if not path.exists(basedir):
-        print("Directory does not excist, creating it.")
         makedirs(basedir)
     if not path.exists(logFile):
-        print("File for logging does not excist, creating it.")
         open('logFile', 'w+')
     logging.basicConfig(filename=logFile,level=logging.INFO,format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 except Exception as e:
@@ -35,7 +33,7 @@ if __name__ == "__main__":
         DatabaseConnect = Database()
         if len(sys.argv) == 2:
             requestedDate = sys.argv[1]
-            sql = f"Select Voranmeldung.id,Nachname,Vorname,Telefon,Mailadresse,Voranmeldung.Geburtsdatum,TIMESTAMPDIFF(year,Voranmeldung.Geburtsdatum,Termine.Tag),Voranmeldung.Booster,Impfstoff.Kurzbezeichnung,Station.Ort,Voranmeldung.Tag,Termine.Stunde,Termine.Slot from Voranmeldung LEFT JOIN Termine ON Termine.id=Voranmeldung.Termin_id LEFT JOIN Station ON Station.id=Termine.id_station LEFT JOIN Impfstoff ON Impfstoff.id=Station.Impfstoff_id where Voranmeldung.Tag Between '{requestedDate.replace('-', '.')} 00:00:00' and '{requestedDate.replace('-', '.')} 23:59:59' ORDER BY Termine.Stunde,Termine.Slot;"
+            sql = f"Select Voranmeldung.id,Nachname,Vorname,Telefon,Mailadresse,Voranmeldung.Geburtsdatum,TIMESTAMPDIFF(year,Voranmeldung.Geburtsdatum,Termine.Tag),Impfstoff.Kurzbezeichnung,Voranmeldung.Booster,Station.Ort,Voranmeldung.Tag,Termine.Stunde,Termine.Slot from Voranmeldung LEFT JOIN Termine ON Termine.id=Voranmeldung.Termin_id LEFT JOIN Station ON Station.id=Termine.id_station LEFT JOIN Impfstoff ON Impfstoff.id=Station.Impfstoff_id where Voranmeldung.Tag Between '{requestedDate.replace('-', '.')} 00:00:00' and '{requestedDate.replace('-', '.')} 23:59:59' ORDER BY Termine.Stunde,Termine.Slot;"
         else:
             logger.debug('Input parameters are not correct, date and/or gesundheitsamt needed')
             raise Exception

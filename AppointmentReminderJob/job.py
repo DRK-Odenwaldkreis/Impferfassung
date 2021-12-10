@@ -16,10 +16,8 @@ try:
     basedir = '../../Logs/Impfzentrum/'
     logFile = f'{basedir}reminderJob.log'
     if not path.exists(basedir):
-        print("Directory does not excist, creating it.")
         makedirs(basedir)
     if not path.exists(logFile):
-        print("File for logging does not excist, creating it.")
         open('logFile', 'w+')
     logging.basicConfig(filename=logFile,level=logging.INFO,format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 except Exception as e:
@@ -36,7 +34,7 @@ if __name__ == "__main__":
             logger.debug('Input parameters are not correct, date needed')
             raise Exception
         DatabaseConnect = Database()
-        sql = f'Select Voranmeldung.Vorname, Voranmeldung.Nachname, Voranmeldung.Mailadresse, Termine.Slot, Termine.Stunde, Voranmeldung.Tag, Voranmeldung.Token, Voranmeldung.id, Station.Ort, Station.Adresse, Termine.opt_station_adresse, Termine.opt_station, Impfstoff.Kurzbezeichnung from Voranmeldung JOIN Termine ON Termine.id=Voranmeldung.Termin_id JOIN Station ON Termine.id_station=Station.id JOIN Impfstoff ON Impfstoff.id=Station.Impfstoff_id where Voranmeldung.Tag Between '{requestedDate} 00:00:00' and '{requestedDate} 23:59:59' and Reminded = 0 and Voranmeldung.Token is not NULL and Voranmeldung.Mailadresse is not NULL;'
+        sql = f"Select Voranmeldung.Vorname, Voranmeldung.Nachname, Voranmeldung.Mailadresse, Termine.Slot, Termine.Stunde, Voranmeldung.Tag, Voranmeldung.Token, Voranmeldung.id, Station.Ort, Station.Adresse, Termine.opt_station_adresse, Termine.opt_station, Impfstoff.Kurzbezeichnung from Voranmeldung JOIN Termine ON Termine.id=Voranmeldung.Termin_id JOIN Station ON Termine.id_station=Station.id JOIN Impfstoff ON Impfstoff.id=Station.Impfstoff_id where Voranmeldung.Tag Between '{requestedDate} 00:00:00' and '{requestedDate} 23:59:59' and Reminded = 0 and Voranmeldung.Token is not NULL and Voranmeldung.Mailadresse is not NULL;"
         logger.debug(f'Getting all appointments for {requestedDate}, using the following query: {sql}')
         recipients = DatabaseConnect.read_all(sql)
         logger.debug(f'Received the following recipients: {str(recipients)}')

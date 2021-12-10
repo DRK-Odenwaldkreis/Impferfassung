@@ -27,7 +27,7 @@ try:
 except Exception as e:
     logging.basicConfig(level=logging.INFO,format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(f'Cleaning for not verified appointments started on: {datetime.datetime.now()}')
-logger.info('Starting Ticketgeneration')
+logger.info('Starting Notification')
 
 
 
