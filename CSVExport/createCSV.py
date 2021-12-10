@@ -35,8 +35,8 @@ def create_CSV(content, date):
                              ])
         for i in content:
             j = list(i)
-            slot = j[9]
-            stunde = j[8]
+            slot = j[-1]
+            stunde = j[-2]
             j.pop()
             j.pop()
             j.append(get_slot_time(slot,stunde))

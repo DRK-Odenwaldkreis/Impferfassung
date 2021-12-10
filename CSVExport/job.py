@@ -25,7 +25,7 @@ if __name__ == "__main__":
         DatabaseConnect = Database()
         if len(sys.argv) == 2:
             requestedDate = sys.argv[1]
-            sql = "Select Voranmeldung.id,Nachname,Vorname,Telefon,Mailadresse,Voranmeldung.Geburtsdatum,TIMESTAMPDIFF(year,Voranmeldung.Geburtsdatum,Termine.Tag),Voranmeldung.Booster,Impfstoff.Kurzbezeichnung,Station.Ort,Voranmeldung.Tag,Termine.Stunde,Termine.Slot from Voranmeldung LEFT JOIN Termine ON Termine.id=Voranmeldung.Termin_id LEFT JOIN Station ON Station.id=Termine.id_station LEFT JOIN Impfstoff ON Impfstoff.id=Station.Impfstoff_id where Voranmeldung.Tag Between '%s 00:00:00' and '%s 23:59:59' ORDER BY Termine.Stunde,Termine.Slot;" % (requestedDate.replace('-', '.'), requestedDate.replace('-', '.'))
+            sql = "Select Voranmeldung.id,Nachname,Vorname,Telefon,Mailadresse,Voranmeldung.Geburtsdatum,TIMESTAMPDIFF(year,Voranmeldung.Geburtsdatum,Termine.Tag),Impfstoff.Kurzbezeichnung,Voranmeldung.Booster,Station.Ort,Voranmeldung.Tag,Termine.Stunde,Termine.Slot from Voranmeldung LEFT JOIN Termine ON Termine.id=Voranmeldung.Termin_id LEFT JOIN Station ON Station.id=Termine.id_station LEFT JOIN Impfstoff ON Impfstoff.id=Station.Impfstoff_id where Voranmeldung.Tag Between '%s 00:00:00' and '%s 23:59:59' ORDER BY Termine.Stunde,Termine.Slot;" % (requestedDate.replace('-', '.'), requestedDate.replace('-', '.'))
         else:
             logger.debug('Input parameters are not correct, date and/or gesundheitsamt needed')
             raise Exception
