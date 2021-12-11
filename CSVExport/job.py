@@ -33,7 +33,7 @@ if __name__ == "__main__":
         DatabaseConnect = Database()
         if len(sys.argv) == 2:
             requestedDate = sys.argv[1]
-            sql = f"Select Voranmeldung.id,Nachname,Vorname,Telefon,Mailadresse,Voranmeldung.Geburtsdatum,TIMESTAMPDIFF(year,Voranmeldung.Geburtsdatum,Termine.Tag),Impfstoff.Kurzbezeichnung,Voranmeldung.Booster,Station.Ort,Voranmeldung.Tag,Termine.Stunde,Termine.Slot from Voranmeldung LEFT JOIN Termine ON Termine.id=Voranmeldung.Termin_id LEFT JOIN Station ON Station.id=Termine.id_station LEFT JOIN Impfstoff ON Impfstoff.id=Station.Impfstoff_id where Voranmeldung.Tag Between '{requestedDate.replace('-', '.')} 00:00:00' and '{requestedDate.replace('-', '.')} 23:59:59' ORDER BY Termine.Stunde,Termine.Slot;"
+            sql = f"Select Voranmeldung.id,Nachname,Vorname,Telefon,Mailadresse,Voranmeldung.Geburtsdatum,TIMESTAMPDIFF(year,Voranmeldung.Geburtsdatum,Termine.Tag),Impfstoff.Kurzbezeichnung,Voranmeldung.Booster,Station.Ort,Termine.opt_station,Termine.opt_station_adresse,Voranmeldung.Tag,Termine.Stunde,Termine.Slot from Voranmeldung LEFT JOIN Termine ON Termine.id=Voranmeldung.Termin_id LEFT JOIN Station ON Station.id=Termine.id_station LEFT JOIN Impfstoff ON Impfstoff.id=Station.Impfstoff_id where Voranmeldung.Tag Between '{requestedDate.replace('-', '.')} 00:00:00' and '{requestedDate.replace('-', '.')} 23:59:59' ORDER BY Termine.Stunde,Termine.Slot;"
         else:
             logger.debug('Input parameters are not correct, date and/or gesundheitsamt needed')
             raise Exception

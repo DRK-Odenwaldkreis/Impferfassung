@@ -33,7 +33,9 @@ def create_CSV(content, date):
                              "Alter",
                              "Impfstoff",
                              "Booster",
+                             "Station",
                              "Ort",
+                             "Adresse",
                              "Datum",
                              "Uhrzeit"
                              ])
