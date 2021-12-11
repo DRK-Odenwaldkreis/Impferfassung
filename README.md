@@ -132,7 +132,7 @@ python job.py DATUM
 Die Tagesreports werden in ../../Reports/Impfzentrum Directory abgelegt. Dieses muss angelegt sein.
 Der Tagesreport erzeugt ein Kuchendiagramm aus der Tagesstatistik.
 
-![Report](Pics/report.png)
+![Report](Pics/daily_report.png)
 
 ## utils
 Hilfsfunktionen wie:
