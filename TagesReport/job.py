@@ -18,7 +18,7 @@ try:
     if not path.exists(basedir):
         makedirs(basedir)
     if not path.exists(logFile):
-        open('logFile', 'w+')
+        open(logFile, 'w+')
     logging.basicConfig(filename=logFile,level=logging.INFO,format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 except Exception as e:
     logging.basicConfig(level=logging.INFO,format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
@@ -41,6 +41,15 @@ if __name__ == "__main__":
         sql = "Select Impfstoff.id,Impfstoff.Kurzbezeichnung from Termine LEFT JOIN Station ON Station.id=Termine.id_station LEFT JOIN Impfstoff ON Impfstoff.id=Station.Impfstoff_id group by Impfstoff.id;"
         vaccine = DatabaseConnect.read_all(sql)
         for i in vaccine:
+            try:
+                sql = "Select Count(Voranmeldung.id), Station.Ort from Voranmeldung LEFT JOIN Termine ON Termine.id=Voranmeldung.Termin_id LEFT JOIN Station ON Station.id=Termine.id_station LEFT JOIN Impfstoff ON Impfstoff.id=Station.Impfstoff_id where Voranmeldung.Used = 1 and Station.Impfstoff_id = %s and Voranmeldung.Tag Between '%s 00:00:00' and '%s 23:59:59' group by Station.id;" % (i[0],requestedDate.replace('-', '.'), requestedDate.replace('-', '.'))
+                doses = DatabaseConnect.read_all(sql)
+                logger.debug('Received doses entries: %s' %(str(doses)))
+            except:
+                logger.error('Sql read_all error, setting doses fix')
+                doses = [(0,0)]
+            if len(doses)==0:
+                break
             sql = "Select Voranmeldung.Geburtsdatum from Voranmeldung LEFT JOIN Termine ON Termine.id=Voranmeldung.Termin_id LEFT JOIN Station ON Station.id=Termine.id_station LEFT JOIN Impfstoff ON Impfstoff.id=Station.Impfstoff_id where Voranmeldung.Used = 1 and Station.Impfstoff_id = %s and Voranmeldung.Tag Between '%s 00:00:00' and '%s 23:59:59';" % (i[0],requestedDate.replace('-', '.'), requestedDate.replace('-', '.'))
             ages = []
             result = DatabaseConnect.read_all(sql)
@@ -53,14 +62,7 @@ if __name__ == "__main__":
                     pass
             logger.debug('Preped age: %s' %(str(ages)))
             try:
-                sql = "Select Count(Voranmeldung.id), Station.Ort from Voranmeldung LEFT JOIN Termine ON Termine.id=Voranmeldung.Termin_id LEFT JOIN Station ON Station.id=Termine.id_station LEFT JOIN Impfstoff ON Impfstoff.id=Station.Impfstoff_id where Voranmeldung.Used = 1 and Station.Impfstoff_id = %s and Voranmeldung.Tag Between '%s 00:00:00' and '%s 23:59:59' group by Station.id;" % (i[0],requestedDate.replace('-', '.'), requestedDate.replace('-', '.'))
-                doses = DatabaseConnect.read_all(sql)
-                logger.debug('Received doses entries: %s' %(str(doses)))
-            except:
-                logger.error('Sql read_all error, setting doses fix')
-                doses = [(0,0)]
-            try:
-                sql = "Select Count(Voranmeldung.id) from Voranmeldung LEFT JOIN Termine ON Termine.id=Voranmeldung.Termin_id LEFT JOIN Station ON Station.id=Termine.id_station LEFT JOIN Impfstoff ON Impfstoff.id=Station.Impfstoff_id where Voranmeldung.Used = 1 and Voranmeldung.Booster is not NULL and Station.Impfstoff_id = %s and Voranmeldung.Tag Between '%s 00:00:00' and '%s 23:59:59' group by Voranmeldung.Booster;" % (i[0],requestedDate.replace('-', '.'), requestedDate.replace('-', '.'))
+                sql = "Select Count(Voranmeldung.id),Voranmeldung.Booster from Voranmeldung LEFT JOIN Termine ON Termine.id=Voranmeldung.Termin_id LEFT JOIN Station ON Station.id=Termine.id_station LEFT JOIN Impfstoff ON Impfstoff.id=Station.Impfstoff_id where Voranmeldung.Used = 1 and Voranmeldung.Booster is not NULL and Station.Impfstoff_id = %s and Voranmeldung.Tag Between '%s 00:00:00' and '%s 23:59:59' group by Voranmeldung.Booster;" % (i[0],requestedDate.replace('-', '.'), requestedDate.replace('-', '.'))
                 booster = DatabaseConnect.read_all(sql)
                 logger.debug('Received booster entries: %s' %(str(booster)))
             except:

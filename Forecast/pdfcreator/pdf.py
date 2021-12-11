@@ -85,18 +85,21 @@ class PDFgenerator:
 			self.sizes = []
 			self.labels = []
 			for i in self.booster:
-				if i[1] == 0:
-					self.labels.append("Basis")
-					self.sizes.append(i[0])
-				if i[1] == 1:
-					self.labels.append("Booster")
-					self.sizes.append(i[0])	
+				try:
+					if i[1] == 0:
+						self.labels.append("Basis")
+						self.sizes.append(i[0])
+					elif i[1] == 1:
+						self.labels.append("Booster")
+						self.sizes.append(i[0])
+					else:
+						pass
+				except:
+					pass
 			self.sizes = np.array(self.sizes)
-			self.ax[0,1].pie(self.sizes, labeldistance=2.0,pctdistance=3.5,labels=self.labels, autopct=lambda p: '{:.2f}%  ({:,.0f})'.format(p, p * sum(self.sizes)/100),shadow=False, startangle=90)		
+			self.ax[0,1].pie(self.sizes,radius=1.8, labels=self.labels,autopct=lambda p: '({:,.0f})'.format( p * sum(self.sizes)/100),shadow=False, startangle=0)		
 		except:
 			pass
-			
-
 
 		# Histogram Altersverteilung
 		try:
@@ -120,12 +123,12 @@ class PDFgenerator:
 			self.ax[1,1].hist(self.waitingArray, 10, color = "blue")
 			self.ax[1,1].set_xlabel("Tage")
 			self.ax[1,1].set_ylabel("Anzahl")
-			self.ax[1,1].set_title("Wartezeit bis Impfung: %s Tage" %(int(self.waitingArray.mean())))
+			self.ax[1,1].set_title("Wartezeit bis Termin: %s Tage" %(int(self.waitingArray.mean())))
 		except:
 			self.ax[1,1].set_xlabel("Tage")
 			self.ax[1,1].set_ylabel("Anzahl")
 			self.ax[1,1].axis(ymin=0,ymax=10,xmin=0,xmax=10)
-			self.ax[1,1].set_title("Wartezeit bis Impfung: x")
+			self.ax[1,1].set_title("Wartezeit bis Termin: x")
 
 		plt.savefig('tmp/' + str(self.date) + '.png', dpi=(180))
 		
@@ -142,7 +145,7 @@ class PDFgenerator:
 
 		pdf.set_font('GNU', 'B', 14)
 
-		pdf.cell(20, 10, 'Forcast für %s am %s' % (self.vaccine, self.date), ln=1)
+		pdf.cell(20, 10, 'Forecast für %s am %s' % (self.vaccine, self.date), ln=1)
 
 		pdf.set_font('GNU', '', 14)
 

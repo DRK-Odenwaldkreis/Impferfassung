@@ -18,7 +18,7 @@ try:
     if not path.exists(basedir):
         makedirs(basedir)
     if not path.exists(logFile):
-        open('logFile', 'w+')
+        open(logFile, 'w+')
     logging.basicConfig(filename=logFile,level=logging.INFO,format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 except Exception as e:
     logging.basicConfig(level=logging.INFO,format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
