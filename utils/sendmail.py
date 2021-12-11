@@ -68,6 +68,44 @@ def send_mail_report(filenames, day, recipients):
             "The following error occured in send mail report: %s" % (err))
         return False
 
+def send_mail_forecast(filenames, day, recipients):
+    try:
+        logging.debug(
+            "Receviced the following filename %s to be sent." % (filenames))
+        message = MIMEMultipart()
+        with open('../utils/MailLayout/NewForecast.html', encoding='utf-8') as f:
+            fileContent = f.read()
+        messageContent = fileContent.replace('[[DAY]]', str(day))
+        message.attach(MIMEText(messageContent, 'html'))
+        message['Subject'] = "Neuer Forecast für: %s" % (str(day))
+        message['From'] = FROM_EMAIL
+        message['Reply-To'] = FROM_EMAIL
+        message['Cc'] = 'impfzentrum@drk-odenwaldkreis.de, report@impfzentrum-odw.de'
+        message['To'] = ", ".join(recipients)
+        files = [filenames]
+        for item in files:
+            attachment = open(item, 'rb')
+            part = MIMEBase('application', 'octet-stream')
+            part.set_payload((attachment).read())
+            encoders.encode_base64(part)
+            part.add_header(
+                'Content-Disposition', "attachment; filename= " + item.replace('../../Reports/Impfzentrum/', ''))
+            message.attach(part)
+        logging.debug("Starting SMTP Connection")
+        smtp = smtplib.SMTP(SMTP_SERVER, port=587)
+        smtp.starttls()
+        smtp.login(SMTP_USERNAME, SMTP_PASSWORD)
+        if simulationMode == 0:
+            logging.debug("Going to send message")
+            smtp.send_message(message)
+            logging.debug("Mail was send")
+        smtp.quit()
+        return True
+    except Exception as err:
+        logging.error(
+            "The following error occured in send mail report: %s" % (err))
+        return False
+
 def send_cancel_appointment(recipient, date, vorname, nachname):
     try:
         logging.debug("Receviced the following recipient: %s to be sent to." % (
