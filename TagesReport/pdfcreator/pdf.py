@@ -176,7 +176,7 @@ class PDFgenerator:
 			self.bar = self.ax[2,1].bar(self.labels, self.sizes)
 			self.ax[2,1].axis(ymin=0,ymax=np.max(self.sizes)*1.5)
 			self.ax[2,1].set_ylabel("Anzahl")
-			self.ax[2,1].set_title("Nachrückertermine: %s" % (self.totalAmount))
+			self.ax[2,1].set_title("Geimpfte Nachrücker: %s" % (self.totalAmount))
 			self.ax[2,1].set_xticklabels(self.labels, rotation=30, ha='right',fontsize=6)
 			for bar in self.bar:
 				height = bar.get_height()
@@ -184,7 +184,7 @@ class PDFgenerator:
 				self.ax[2,1].text(label_x_pos, height, s=f'{height} ({round(height/(self.totalAmount)*100,1)}%)', ha='center',va='bottom',fontsize=6)
 		except:
 			self.ax[2,1].set_ylabel("Anzahl")
-			self.ax[2,1].set_title("Nachrückertermine: x")
+			self.ax[2,1].set_title("Geimpfte Nachrücker: x")
 			self.ax[2,1].axis(ymin=0,ymax=10,xmin=0,xmax=10)
 		plt.savefig('tmp/' + str(self.date) + '.png', dpi=(180))
 		
