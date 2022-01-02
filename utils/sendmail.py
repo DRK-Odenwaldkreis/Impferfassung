@@ -160,7 +160,7 @@ def send_mail_reminder(recipient, date, vorname, nachname, appointment, impfstof
             "The following error occured in send mail reminder: %s" % (err))
         return False
 
-def send_notification(recipient, date, vorname, nachname, appointment, impfstoff, url, location):
+def send_notification(recipient, date, vorname, nachname, appointment, impfstoff, url, location,files):
     try:
         logging.debug("Receviced the following recipient: %s to be sent to." % (
             recipient))
@@ -173,6 +173,14 @@ def send_notification(recipient, date, vorname, nachname, appointment, impfstoff
         message['From'] = "Impfzentrum des DRK Odenwaldkreis" + f' <{FROM_EMAIL}>'
         message['Reply-To'] = FROM_EMAIL
         message['To'] = recipient
+        for item in files:
+            attachment = open(item, 'rb')
+            part = MIMEBase('application', 'octet-stream')
+            part.set_payload((attachment).read())
+            encoders.encode_base64(part)
+            part.add_header(
+                'Content-Disposition', "attachment; filename= " + item.replace('../../Tickets/', ''))
+            message.attach(part)
         smtp = smtplib.SMTP(SMTP_SERVER, port=587)
         smtp.starttls()
         smtp.login(SMTP_USERNAME, SMTP_PASSWORD)

@@ -8,6 +8,7 @@ sys.path.append("..")
 from utils.database import Database
 from utils.sendmail import send_notification
 from utils.slot import get_slot_time
+from utils.icsCreation import create_ics
 import datetime
 import time
 import locale
@@ -62,7 +63,9 @@ if __name__ == "__main__":
                 else:
                     location = f'{str(opt_ort)}, {str(opt_adress)}'
                 url = f'https://impfzentrum-odw.de/registration/index.php?cancel=cancel&t={token}&i={entry}'
-                if send_notification(mail,date,vorname,nachname,appointment,impfstoff,url,location): 
+                filename = []
+                filename.append(str(create_ics(date,slot,stunde,location,token)))
+                if send_notification(mail,date,vorname,nachname,appointment,impfstoff,url,location,filename): 
                     logger.debug('Mail was succesfully send, closing entry in db')
                     sql = f'Update Voranmeldung SET Mailsend = 1 WHERE id = {entry};'
                     DatabaseConnect.update(sql)
