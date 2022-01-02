@@ -15,7 +15,7 @@ def create_ics(day,slot,stunde,location,token):
     utc_dt_end = utc_dt + duration
     c = Calendar()
     e = Event()
-    e.name = "Termin Testzentrum"
+    e.name = "Termin Impfzentrum"
     e.begin = utc_dt.strftime("%Y-%m-%d %H:%M:%S")
     e.end = utc_dt_end.strftime("%Y-%m-%d %H:%M:%S")
     e.location = location
