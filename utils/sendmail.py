@@ -24,6 +24,7 @@ logger.debug('Starting')
 
 FROM_EMAIL = read_config("Mail", "FROM_EMAIL")
 TO_EMAIL = read_config("Mail", "TO_EMAIL")
+REPLY_TO_EMAIL = read_config("Mail", "REPLY_TO_EMAIL")
 SMTP_SERVER = read_config("Mail", "SMTP_SERVER")
 SMTP_USERNAME = read_config("Mail", "SMTP_USERNAME")
 SMTP_PASSWORD = read_config("Mail", "SMTP_PASSWORD")
@@ -117,7 +118,7 @@ def send_cancel_appointment(recipient, date, vorname, nachname):
         message.attach(MIMEText(messageContent, 'html'))
         message['Subject'] = "Ihr Termin im Impfzentrum des DRK Odenwaldkreis am %s wurde storniert" % (str(date))
         message['From'] = "Impfzentrum des DRK Odenwaldkreis" + f' <{FROM_EMAIL}>'
-        message['Reply-To'] = FROM_EMAIL
+        message['Reply-To'] = REPLY_TO_EMAIL
         message['To'] = recipient
         smtp = smtplib.SMTP(SMTP_SERVER, port=587)
         smtp.starttls()
@@ -144,7 +145,7 @@ def send_mail_reminder(recipient, date, vorname, nachname, appointment, impfstof
         message.attach(MIMEText(messageContent, 'html'))
         message['Subject'] = "Erinnerung an Termin im Impfzentrum des DRK Odenwaldkreis am %s %s" % (str(date), str(appointment))
         message['From'] = "Impfzentrum des DRK Odenwaldkreis" + f' <{FROM_EMAIL}>'
-        message['Reply-To'] = FROM_EMAIL
+        message['Reply-To'] = REPLY_TO_EMAIL
         message['To'] = recipient
         smtp = smtplib.SMTP(SMTP_SERVER, port=587)
         smtp.starttls()
@@ -171,7 +172,7 @@ def send_notification(recipient, date, vorname, nachname, appointment, impfstoff
         message['Subject'] = "Impftermin %s im Impfzentrum des DRK Odenwaldkreis am %s" % (str(appointment), str(date))
         message.attach(MIMEText(messageContent, 'html'))
         message['From'] = "Impfzentrum des DRK Odenwaldkreis" + f' <{FROM_EMAIL}>'
-        message['Reply-To'] = FROM_EMAIL
+        message['Reply-To'] = REPLY_TO_EMAIL
         message['To'] = recipient
         for item in files:
             attachment = open(item, 'rb')
